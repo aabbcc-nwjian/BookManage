@@ -30,7 +30,7 @@ class ApiRequest {
         ...config.header,
       };
 
-      if (!config.skipAuth && !config.url.includes("/user/login")) {
+      if (!config.skipAuth && !config.url.includes("/auth/")) {
         const token = this.getToken();
         if (token) {
           headers.Authorization = `Bearer ${token}`;

@@ -1,28 +1,60 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import bgImage from "../../img/library.png";
 import { login, register } from "../../api/login";
 import userStore from "../../store/user";
+
+type ToastType = "success" | "error" | null;
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<"login" | "register">("login");
+  const [toast, setToast] = useState<{
+    type: ToastType;
+    message: string;
+  } | null>(null);
   const { setRole } = userStore();
 
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   const toLogin = async () => {
-    const res = await login({ username, password });
-    console.log(res);
-    if (res.code === 200) {
-      setRole(res.data.role);
-      localStorage.setItem("token", res.data.token);
-      navigate("/home");
+    try {
+      const res = await login({ username, password });
+      console.log(res);
+      if (res.code === 200) {
+        setRole(res.data.user.role);
+        localStorage.setItem("token", res.data.token);
+        navigate("/home");
+      } else {
+        setToast({ type: "error", message: res.msg || "用户名或密码错误" });
+      }
+    } catch {
+      setToast({ type: "error", message: "网络错误，请稍后重试" });
     }
   };
   const toRegister = async () => {
-    const res = await register({ username, password });
-    console.log(res);
+    try {
+      const res = await register({ username, password });
+      console.log(res);
+      if (res.code === 201) {
+        setToast({ type: "success", message: "注册成功" });
+        setPassword("");
+        setTimeout(() => {
+        setStatus("login");
+        }, 600);
+      } else {
+        setToast({ type: "error", message: res.msg || "注册失败，请检查输入信息" });
+      }
+    } catch {
+      setToast({ type: "error", message: "网络错误，请稍后重试" });
+    }
   };
 
   const handleLogin = () => {
@@ -209,12 +241,45 @@ export default function LoginPage() {
             fontSize: "12px",
             marginTop: "22px",
             marginBottom: 0,
+            cursor: "pointer",
           }}
           onClick={() => setStatus(status === "login" ? "register" : "login")}
         >
           {status === "login" ? "还没有账号？点击注册" : "已有账号？点击登录"}
         </p>
       </div>
+
+      {/* Toast 弹窗 */}
+      {toast && (
+        <div
+          style={{
+            position: "fixed",
+            top: "80px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 9999,
+            padding: "14px 28px",
+            borderRadius: "8px",
+            fontSize: "15px",
+            fontWeight: 600,
+            color: "#fff",
+            backgroundColor: toast.type === "success" ? "#27ae60" : "#e94560",
+            boxShadow: "0 6px 24px rgba(0,0,0,0.25)",
+            animation: "toastIn 0.3s ease-out",
+          }}
+        >
+          {toast.type === "success" ? "✅ " : "❌ "}
+          {toast.message}
+        </div>
+      )}
+
+      {/* Toast 动画 keyframes */}
+      <style>{`
+        @keyframes toastIn {
+          from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

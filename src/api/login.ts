@@ -6,7 +6,7 @@ export const login = ({
   username: string;
   password: string;
 }) => {
-  return apiClient.post<any>("/auth/login", { username, password });
+  return apiClient.post<any>("/auth/login", { username, password }, { skipAuth: true });
 };
 export const register = ({
   username,
@@ -15,5 +15,5 @@ export const register = ({
   username: string;
   password: string;
 }) => {
-  return apiClient.post<any>("/auth/register", { username, password });
+  return apiClient.post<any>("/auth/register", { username, password }, { skipAuth: true });
 };
