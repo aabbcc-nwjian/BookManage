@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import bgImage from "../../img/library3.png";
+import { getBookList } from "../../api/books";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -15,17 +16,23 @@ export default function HomePage() {
   const reserveCardRef = useRef<HTMLAnchorElement>(null);
   const fineCardRef = useRef<HTMLAnchorElement>(null);
 
+  const getBooks = async () => {
+    const res = await getBookList();
+    console.log(res);
+  };
+
+  useEffect(() => {
+    getBooks();
+  }, []);
+
   // 页面入场动画
   useEffect(() => {
     const easeOut = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
 
     // 欢迎卡片整体从左到右展开
     welcomeCardRef.current?.animate(
-      [
-        { clipPath: "inset(0 100% 0 0)" },
-        { clipPath: "inset(0 0 0 0)" },
-      ],
-      { duration: 700, easing: easeOut, fill: "forwards" }
+      [{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0 0 0)" }],
+      { duration: 700, easing: easeOut, fill: "forwards" },
     );
 
     // 欢迎卡片内容依次从左滑入 + 淡入
@@ -35,7 +42,7 @@ export default function HomePage() {
           { transform: "translateX(-50px)", opacity: 0 },
           { transform: "translateX(0)", opacity: 1 },
         ],
-        { duration: 500, delay, easing: easeOut, fill: "forwards" }
+        { duration: 500, delay, easing: easeOut, fill: "forwards" },
       );
     };
     slideIn(welcomeIconRef.current, 150);
@@ -52,11 +59,13 @@ export default function HomePage() {
     ];
     cardRefs.forEach((el, i) => {
       el?.animate(
-        [
-          { clipPath: "inset(0 100% 0 0)" },
-          { clipPath: "inset(0 0 0 0)" },
-        ],
-        { duration: 550, delay: 250 + i * 120, easing: easeOut, fill: "forwards" }
+        [{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0 0 0)" }],
+        {
+          duration: 550,
+          delay: 250 + i * 120,
+          easing: easeOut,
+          fill: "forwards",
+        },
       );
     });
   }, []);
@@ -67,6 +76,39 @@ export default function HomePage() {
     if (term) {
       navigate(`/books?q=${encodeURIComponent(term)}`);
     }
+  // 搜索匹配的图书（最多显示 6 条）
+  const searchResults = useMemo(() => {
+    if (!search.trim()) return [];
+    const term = search.trim().toLowerCase();
+    return books
+      .filter(
+        (b) =>
+          b.title.toLowerCase().includes(term) ||
+          b.author.toLowerCase().includes(term) ||
+          b.isbn.includes(term),
+      )
+      .slice(0, 6);
+  }, [search]);
+
+  // 点击外部关闭下拉
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (
+        searchWrapperRef.current &&
+        !searchWrapperRef.current.contains(e.target as Node)
+      ) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  // 选中图书跳转
+  const goToBook = (book: Book) => {
+    setSearch("");
+    setShowResults(false);
+    navigate(`/books/${book.id}`);
   };
 
   return (
@@ -160,87 +202,172 @@ export default function HomePage() {
               margin: "0 auto",
             }}
           >
-            <span
+            <div
               style={{
-                position: "absolute",
-                left: "18px",
-                fontSize: "20px",
-                color: "#a0b8d0",
-                pointerEvents: "none",
-                zIndex: 1,
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
               }}
             >
-              🔍
-            </span>
-            <input
-              type="text"
-              placeholder="搜索书名 / 作者 / ISBN..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSearch();
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "#3498db";
-                e.currentTarget.style.boxShadow =
-                  "0 0 0 3px rgba(52,152,219,0.12)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "#c8d8e8";
-                e.currentTarget.style.boxShadow =
-                  "0 2px 12px rgba(26,58,107,0.08)";
-              }}
-              style={{
-                width: "100%",
-                padding: "16px 52px 16px 52px",
-                fontSize: "17px",
-                color: "#1a3a6b",
-                backgroundColor: "#fff",
-                border: "2px solid #c8d8e8",
-                borderRadius: "10px",
-                outline: "none",
-                boxShadow: "0 2px 12px rgba(26,58,107,0.08)",
-                boxSizing: "border-box",
-                transition: "border-color 0.2s, box-shadow 0.2s",
-              }}
-            />
-            {/* 搜索按钮 */}
-            {search.trim() && (
-              <button
-                onClick={handleSearch}
+              <span
                 style={{
                   position: "absolute",
-                  right: "40px",
-                  background: "none",
-                  border: "none",
-                  fontSize: "18px",
-                  color: "#3498db",
-                  cursor: "pointer",
-                  padding: "4px",
-                  lineHeight: 1,
+                  left: "18px",
+                  fontSize: "20px",
+                  color: "#a0b8d0",
+                  pointerEvents: "none",
+                  zIndex: 1,
                 }}
-                title="搜索"
               >
-                →
-              </button>
+                🔍
+              </span>
+              <input
+                type="text"
+                placeholder="搜索书名 / 作者 / ISBN..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  if (e.target.value.trim()) setShowResults(true);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && searchResults.length > 0) {
+                    goToBook(searchResults[0]);
+                  }
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = "#3498db";
+                  e.currentTarget.style.boxShadow =
+                    "0 0 0 3px rgba(52,152,219,0.12)";
+                  if (search.trim() && searchResults.length > 0)
+                    setShowResults(true);
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = "#c8d8e8";
+                  e.currentTarget.style.boxShadow =
+                    "0 2px 12px rgba(26,58,107,0.08)";
+                }}
+                style={{
+                  width: "100%",
+                  padding: "16px 52px 16px 52px",
+                  fontSize: "17px",
+                  color: "#1a3a6b",
+                  backgroundColor: "#fff",
+                  border: "2px solid #c8d8e8",
+                  borderRadius: "10px",
+                  outline: "none",
+                  boxShadow: "0 2px 12px rgba(26,58,107,0.08)",
+                  boxSizing: "border-box",
+                  transition: "border-color 0.2s, box-shadow 0.2s",
+                }}
+              />
+              {search && (
+                <button
+                  onClick={() => {
+                    setSearch("");
+                    setShowResults(false);
+                  }}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    background: "none",
+                    border: "none",
+                    fontSize: "18px",
+                    color: "#bbb",
+                    cursor: "pointer",
+                    padding: "4px",
+                    lineHeight: 1,
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* 搜索结果下拉 */}
+            {showResults && searchResults.length > 0 && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 6px)",
+                  left: 0,
+                  right: 0,
+                  background: "#fff",
+                  borderRadius: "12px",
+                  boxShadow: "0 8px 32px rgba(26,58,107,0.2)",
+                  overflow: "hidden",
+                  textAlign: "left",
+                  zIndex: 20,
+                }}
+              >
+                {searchResults.map((book) => (
+                  <div
+                    key={book.id}
+                    onClick={() => goToBook(book)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "14px 20px",
+                      cursor: "pointer",
+                      transition: "background-color 0.15s",
+                      borderBottom: "1px solid #f0f4f8",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#eef5fb")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "")
+                    }
+                  >
+                    <div>
+                      <div
+                        style={{
+                          fontSize: "15px",
+                          fontWeight: 600,
+                          color: "#1a3a6b",
+                          marginBottom: "2px",
+                        }}
+                      >
+                        {book.title}
+                      </div>
+                      <div style={{ fontSize: "13px", color: "#999" }}>
+                        {book.author} · {book.year} · {book.category}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        color: "#3498db",
+                        fontWeight: 500,
+                      }}
+                    >
+                      查看详情 →
+                    </span>
+                  </div>
+                ))}
+              </div>
             )}
-            {search && (
-              <button
-                onClick={() => setSearch("")}
+
+            {/* 无结果 */}
+            {showResults && search.trim() && searchResults.length === 0 && (
+              <div
                 style={{
                   position: "absolute",
-                  right: "10px",
-                  background: "none",
-                  border: "none",
-                  fontSize: "18px",
+                  top: "calc(100% + 6px)",
+                  left: 0,
+                  right: 0,
+                  background: "#fff",
+                  borderRadius: "12px",
+                  boxShadow: "0 8px 32px rgba(26,58,107,0.2)",
+                  padding: "28px 20px",
+                  textAlign: "center",
                   color: "#bbb",
-                  cursor: "pointer",
-                  padding: "4px",
-                  lineHeight: 1,
+                  fontSize: "14px",
+                  zIndex: 20,
                 }}
               >
-                ✕
-              </button>
+                📭 未找到匹配的图书
+              </div>
             )}
           </div>
         </div>
