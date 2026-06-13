@@ -1,14 +1,30 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import bgImage from "../../img/library.png";
+import { login, register } from "../../api/login";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [status, setStatus] = useState<"login" | "register">("login");
+
+  const toLogin = async () => {
+    const res = await login({ username, password });
+    console.log(res);
+  };
+  const toRegister = async () => {
+    const res = await register({ username, password });
+    console.log(res);
+  };
 
   const handleLogin = () => {
-    navigate("/home");
+    if (status === "login") {
+      toLogin();
+    } else {
+      toRegister();
+    }
+    //navigate("/home");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -173,14 +189,10 @@ export default function LoginPage() {
           onMouseLeave={(e) =>
             (e.currentTarget.style.backgroundColor = "#e94560")
           }
-          onMouseDown={(e) =>
-            (e.currentTarget.style.transform = "scale(0.98)")
-          }
-          onMouseUp={(e) =>
-            (e.currentTarget.style.transform = "scale(1)")
-          }
+          onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.98)")}
+          onMouseUp={(e) => (e.currentTarget.style.transform = "scale(1)")}
         >
-          登 录
+          {status === "login" ? "登 录" : "注 册"}
         </button>
 
         {/* 底部提示 */}
@@ -192,8 +204,9 @@ export default function LoginPage() {
             marginTop: "22px",
             marginBottom: 0,
           }}
+          onClick={() => setStatus(status === "login" ? "register" : "login")}
         >
-          点击登录即可进入系统
+          {status === "login" ? "还没有账号？点击注册" : "已有账号？点击登录"}
         </p>
       </div>
     </div>
