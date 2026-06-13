@@ -12,6 +12,10 @@ export default function LoginPage() {
   const toLogin = async () => {
     const res = await login({ username, password });
     console.log(res);
+    if (res.code === 200) {
+      localStorage.setItem("token", res.data.token);
+      navigate("/home");
+    }
   };
   const toRegister = async () => {
     const res = await register({ username, password });
@@ -24,7 +28,6 @@ export default function LoginPage() {
     } else {
       toRegister();
     }
-    //navigate("/home");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
