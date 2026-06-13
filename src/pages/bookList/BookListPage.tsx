@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { getAllBooks} from "../../data/books";
 import type { Book } from "../../data/books";
 import bgImage from "../../img/bookList.png";
@@ -33,13 +33,24 @@ function saveHistory(history: string[]) {
 }
 
 export default function BookListPage() {
-  const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSearch = searchParams.get("q") || "";
+  const [search, setSearch] = useState(initialSearch);
   const [category, setCategory] = useState("全部");
   const [statusFilter] = useState("全部");
   const [history, setHistory] = useState<string[]>(loadHistory);
   const [showHistory, setShowHistory] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const cardListRef = useRef<HTMLDivElement>(null);
+
+  // 当搜索词变化时同步更新 URL 参数
+  useEffect(() => {
+    if (search.trim()) {
+      setSearchParams({ q: search.trim() }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  }, [search, setSearchParams]);
 
   // 点击外部关闭下拉菜单
   useEffect(() => {
@@ -361,7 +372,7 @@ export default function BookListPage() {
               {/* 封面 */}
               <div
                 style={{
-                  width: "95px",
+                  width: "120px",
                   minHeight: "160px",
                   flexShrink: 0,
                   background: `url(${coverDefault}) center / cover no-repeat`,

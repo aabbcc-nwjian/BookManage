@@ -1,16 +1,10 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getAllBooks } from "../../data/books";
-import type { Book } from "../../data/books";
 import bgImage from "../../img/library3.png";
-
-const books = getAllBooks();
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [showResults, setShowResults] = useState(false);
-  const searchWrapperRef = useRef<HTMLDivElement>(null);
   const welcomeCardRef = useRef<HTMLDivElement>(null);
   const welcomeIconRef = useRef<HTMLDivElement>(null);
   const welcomeTitleRef = useRef<HTMLHeadingElement>(null);
@@ -67,39 +61,12 @@ export default function HomePage() {
     });
   }, []);
 
-  // 搜索匹配的图书（最多显示 6 条）
-  const searchResults = useMemo(() => {
-    if (!search.trim()) return [];
-    const term = search.trim().toLowerCase();
-    return books
-      .filter(
-        (b) =>
-          b.title.toLowerCase().includes(term) ||
-          b.author.toLowerCase().includes(term) ||
-          b.isbn.includes(term)
-      )
-      .slice(0, 6);
-  }, [search]);
-
-  // 点击外部关闭下拉
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (
-        searchWrapperRef.current &&
-        !searchWrapperRef.current.contains(e.target as Node)
-      ) {
-        setShowResults(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  // 选中图书跳转
-  const goToBook = (book: Book) => {
-    setSearch("");
-    setShowResults(false);
-    navigate(`/books/${book.id}`);
+  // 回车搜索 → 跳转到图书列表页并传递搜索词
+  const handleSearch = () => {
+    const term = search.trim();
+    if (term) {
+      navigate(`/books?q=${encodeURIComponent(term)}`);
+    }
   };
 
   return (
@@ -184,16 +151,14 @@ export default function HomePage() {
           }}
         >
           <div
-            ref={searchWrapperRef}
             style={{
               position: "relative",
+              display: "flex",
+              alignItems: "center",
               width: "100%",
               maxWidth: "600px",
               margin: "0 auto",
             }}
-          >
-          <div
-            style={{ position: "relative", display: "flex", alignItems: "center" }}
           >
             <span
               style={{
@@ -211,21 +176,14 @@ export default function HomePage() {
               type="text"
               placeholder="搜索书名 / 作者 / ISBN..."
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                if (e.target.value.trim()) setShowResults(true);
-              }}
+              onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && searchResults.length > 0) {
-                  goToBook(searchResults[0]);
-                }
+                if (e.key === "Enter") handleSearch();
               }}
               onFocus={(e) => {
                 e.currentTarget.style.borderColor = "#3498db";
                 e.currentTarget.style.boxShadow =
                   "0 0 0 3px rgba(52,152,219,0.12)";
-                if (search.trim() && searchResults.length > 0)
-                  setShowResults(true);
               }}
               onBlur={(e) => {
                 e.currentTarget.style.borderColor = "#c8d8e8";
@@ -246,15 +204,32 @@ export default function HomePage() {
                 transition: "border-color 0.2s, box-shadow 0.2s",
               }}
             />
-            {search && (
+            {/* 搜索按钮 */}
+            {search.trim() && (
               <button
-                onClick={() => {
-                  setSearch("");
-                  setShowResults(false);
-                }}
+                onClick={handleSearch}
                 style={{
                   position: "absolute",
-                  right: "12px",
+                  right: "40px",
+                  background: "none",
+                  border: "none",
+                  fontSize: "18px",
+                  color: "#3498db",
+                  cursor: "pointer",
+                  padding: "4px",
+                  lineHeight: 1,
+                }}
+                title="搜索"
+              >
+                →
+              </button>
+            )}
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                style={{
+                  position: "absolute",
+                  right: "10px",
                   background: "none",
                   border: "none",
                   fontSize: "18px",
@@ -267,94 +242,6 @@ export default function HomePage() {
                 ✕
               </button>
             )}
-          </div>
-
-          {/* 搜索结果下拉 */}
-          {showResults && searchResults.length > 0 && (
-            <div
-              style={{
-                position: "absolute",
-                top: "calc(100% + 6px)",
-                left: 0,
-                right: 0,
-                background: "#fff",
-                borderRadius: "12px",
-                boxShadow: "0 8px 32px rgba(26,58,107,0.2)",
-                overflow: "hidden",
-                textAlign: "left",
-                zIndex: 20,
-              }}
-            >
-              {searchResults.map((book) => (
-                <div
-                  key={book.id}
-                  onClick={() => goToBook(book)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "14px 20px",
-                    cursor: "pointer",
-                    transition: "background-color 0.15s",
-                    borderBottom: "1px solid #f0f4f8",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#eef5fb")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "")
-                  }
-                >
-                  <div>
-                    <div
-                      style={{
-                        fontSize: "15px",
-                        fontWeight: 600,
-                        color: "#1a3a6b",
-                        marginBottom: "2px",
-                      }}
-                    >
-                      {book.title}
-                    </div>
-                    <div style={{ fontSize: "13px", color: "#999" }}>
-                      {book.author} · {book.year} · {book.category}
-                    </div>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      color: "#3498db",
-                      fontWeight: 500,
-                    }}
-                  >
-                    查看详情 →
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* 无结果 */}
-          {showResults && search.trim() && searchResults.length === 0 && (
-            <div
-              style={{
-                position: "absolute",
-                top: "calc(100% + 6px)",
-                left: 0,
-                right: 0,
-                background: "#fff",
-                borderRadius: "12px",
-                boxShadow: "0 8px 32px rgba(26,58,107,0.2)",
-                padding: "28px 20px",
-                textAlign: "center",
-                color: "#bbb",
-                fontSize: "14px",
-                zIndex: 20,
-              }}
-            >
-              📭 未找到匹配的图书
-            </div>
-          )}
           </div>
         </div>
       </div>
