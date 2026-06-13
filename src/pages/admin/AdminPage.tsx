@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { getAllBooks } from "../../data/books";
 import type { Book } from "../../data/books";
+import { addBook } from "../../api/books";
 
 const books = getAllBooks();
 const allCategories = [...new Set(books.map((b) => b.category))];

@@ -1,9 +1,9 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import userStore from "../store/user";
 
 export default function Layout() {
   const navigate = useNavigate();
-  const { role } = userStore();
+  const role = localStorage.getItem("role");
+  const username = localStorage.getItem("username");
   const isAdmin = role === "admin"; // TODO: 替换为实际的权限判断逻辑
 
   return (
@@ -149,7 +149,7 @@ export default function Layout() {
             transition: "all 0.2s",
           })}
         >
-          登录
+          {username || "登录"}
         </NavLink>
       </nav>
 

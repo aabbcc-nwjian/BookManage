@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, use } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import bgImage from "../../img/library3.png";
+import { getReservationList, getBorrowList } from "../../api/record";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -15,17 +16,26 @@ export default function HomePage() {
   const reserveCardRef = useRef<HTMLAnchorElement>(null);
   const fineCardRef = useRef<HTMLAnchorElement>(null);
 
+  useEffect(() => {
+    getReservationList().then((res) => {
+      console.log("预约记录:", res);
+    });
+  }, []);
+
+  useEffect(() => {
+    getBorrowList().then((res) => {
+      console.log("借阅记录:", res);
+    });
+  }, []);
+
   // 页面入场动画
   useEffect(() => {
     const easeOut = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
 
     // 欢迎卡片整体从左到右展开
     welcomeCardRef.current?.animate(
-      [
-        { clipPath: "inset(0 100% 0 0)" },
-        { clipPath: "inset(0 0 0 0)" },
-      ],
-      { duration: 700, easing: easeOut, fill: "forwards" }
+      [{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0 0 0)" }],
+      { duration: 700, easing: easeOut, fill: "forwards" },
     );
 
     // 欢迎卡片内容依次从左滑入 + 淡入
@@ -35,7 +45,7 @@ export default function HomePage() {
           { transform: "translateX(-50px)", opacity: 0 },
           { transform: "translateX(0)", opacity: 1 },
         ],
-        { duration: 500, delay, easing: easeOut, fill: "forwards" }
+        { duration: 500, delay, easing: easeOut, fill: "forwards" },
       );
     };
     slideIn(welcomeIconRef.current, 150);
@@ -52,11 +62,13 @@ export default function HomePage() {
     ];
     cardRefs.forEach((el, i) => {
       el?.animate(
-        [
-          { clipPath: "inset(0 100% 0 0)" },
-          { clipPath: "inset(0 0 0 0)" },
-        ],
-        { duration: 550, delay: 250 + i * 120, easing: easeOut, fill: "forwards" }
+        [{ clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0 0 0)" }],
+        {
+          duration: 550,
+          delay: 250 + i * 120,
+          easing: easeOut,
+          fill: "forwards",
+        },
       );
     });
   }, []);

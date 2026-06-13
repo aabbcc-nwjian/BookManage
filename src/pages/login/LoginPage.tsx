@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import bgImage from "../../img/library.png";
 import { login, register } from "../../api/login";
-import userStore from "../../store/user";
 
 type ToastType = "success" | "error" | null;
 
@@ -15,7 +14,6 @@ export default function LoginPage() {
     type: ToastType;
     message: string;
   } | null>(null);
-  const { setRole } = userStore();
 
   useEffect(() => {
     if (toast) {
@@ -29,7 +27,8 @@ export default function LoginPage() {
       const res = await login({ username, password });
       console.log(res);
       if (res.code === 200) {
-        setRole(res.data.user.role);
+        localStorage.setItem("role", res.data.user.role);
+        localStorage.setItem("username", username);
         localStorage.setItem("token", res.data.token);
         navigate("/home");
       } else {
@@ -47,10 +46,13 @@ export default function LoginPage() {
         setToast({ type: "success", message: "注册成功" });
         setPassword("");
         setTimeout(() => {
-        setStatus("login");
+          setStatus("login");
         }, 600);
       } else {
-        setToast({ type: "error", message: res.msg || "注册失败，请检查输入信息" });
+        setToast({
+          type: "error",
+          message: res.msg || "注册失败，请检查输入信息",
+        });
       }
     } catch {
       setToast({ type: "error", message: "网络错误，请稍后重试" });
