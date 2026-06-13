@@ -206,6 +206,29 @@ export default function BookDetailPage() {
           {/* 操作按钮 */}
           <div style={{ display: "flex", gap: "12px" }}>
             <button
+              onClick={() => navigate(`/books/${book.id}/borrow`)}
+              style={{
+                padding: "10px 24px",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "#fff",
+                backgroundColor: "#e94560",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                transition: "background-color 0.2s",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#d63851")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#e94560")
+              }
+            >
+              📋 借阅
+            </button>
+
+            <button
               onClick={() => navigate("/books")}
               style={{
                 padding: "10px 24px",

@@ -2,6 +2,7 @@ import { NavLink, Outlet, useNavigate } from "react-router-dom";
 
 export default function Layout() {
   const navigate = useNavigate();
+  const isAdmin = true; // TODO: 替换为实际的权限判断逻辑
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -111,6 +112,24 @@ export default function Layout() {
         >
           罚款记录
         </NavLink>
+
+        {/* 管理员入口（仅管理员可见） */}
+        {isAdmin && (
+          <NavLink
+            to="/admin"
+            style={({ isActive }) => ({
+              color: isActive ? "#e94560" : "#f1c40f",
+              textDecoration: "none",
+              fontSize: "15px",
+              fontWeight: isActive ? 600 : 400,
+              padding: "6px 12px",
+              borderRadius: "6px",
+              transition: "all 0.2s",
+            })}
+          >
+            ⚙️ 管理员页面
+          </NavLink>
+        )}
 
         <div style={{ flex: 1 }} />
 

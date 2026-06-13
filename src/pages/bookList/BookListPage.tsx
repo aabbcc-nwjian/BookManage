@@ -117,11 +117,15 @@ export default function BookListPage() {
   return (
     <div
       style={{
-        margin: "-56px -24px -24px -24px",
+        width: "100vw",
+        marginTop: "-56px",
+        marginBottom: "-24px",
+        position: "relative",
+        left: "50%",
+        transform: "translateX(-50%)",
         minHeight: "100vh",
         background: `url(${bgImage}) center / cover no-repeat`,
         backgroundAttachment: "fixed",
-        position: "relative",
         padding: "32px 24px 48px",
       }}
     >
