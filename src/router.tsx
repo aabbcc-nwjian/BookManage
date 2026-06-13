@@ -12,6 +12,7 @@ const BorrowRecords = lazy(() => import("./pages/borrowRecords/BorrowRecordsPage
 const ReserveRecords = lazy(() => import("./pages/reserveRecords/ReserveRecordsPage"));
 const FineRecords = lazy(() => import("./pages/fineRecords/FineRecordsPage"));
 const Borrow = lazy(() => import("./pages/borrow/BorrowPage"));
+const Reserve = lazy(() => import("./pages/reserve/ReservePage"));
 const Admin = lazy(() => import("./pages/admin/AdminPage"));
 
 const routeConfig: RouteObject[] = [
@@ -28,6 +29,7 @@ const routeConfig: RouteObject[] = [
       { path: "books", element: <BookList /> },
       { path: "books/:id", element: <BookDetail /> },
       { path: "books/:id/borrow", element: <Borrow /> },
+      { path: "books/:id/reserve", element: <Reserve /> },
       { path: "borrows", element: <BorrowRecords /> },
       { path: "reserves", element: <ReserveRecords /> },
       { path: "fines", element: <FineRecords /> },

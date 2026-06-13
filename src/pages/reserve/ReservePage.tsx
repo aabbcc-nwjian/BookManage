@@ -3,21 +3,11 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { getBookById } from "../../data/books";
 import coverDefault from "../../img/threeBody.jpg";
 
-const DURATION_OPTIONS = [
-  { label: "1 周", value: 7, desc: "7 天" },
-  { label: "1 月", value: 30, desc: "30 天" },
-  { label: "3 月", value: 90, desc: "90 天" },
-] as const;
-
-const todayStr = new Date().toISOString().split("T")[0];
-
-export default function BorrowPage() {
+export default function ReservePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const book = id ? getBookById(id) : undefined;
 
-  const [borrowDate, setBorrowDate] = useState(todayStr);
-  const [duration, setDuration] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   if (!book) {
@@ -43,19 +33,7 @@ export default function BorrowPage() {
     );
   }
 
-  const canSubmit = borrowDate && duration !== null;
-
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    setSubmitted(true);
-  };
-
   if (submitted) {
-    const selectedDuration = DURATION_OPTIONS.find((d) => d.value === duration);
-    const borrowDateObj = new Date(borrowDate);
-    borrowDateObj.setDate(borrowDateObj.getDate() + duration!);
-    const returnDate = borrowDateObj.toISOString().split("T")[0];
-
     return (
       <div style={{ maxWidth: "560px", margin: "0 auto", paddingBottom: "48px" }}>
         <div
@@ -63,17 +41,17 @@ export default function BorrowPage() {
             textAlign: "center",
             background: "#fff",
             borderRadius: "12px",
-            border: "2px solid #27ae60",
+            border: "2px solid #3498db",
             padding: "48px 32px",
             marginTop: "20px",
           }}
         >
-          <div style={{ fontSize: "56px", marginBottom: "16px" }}>✅</div>
-          <h2 style={{ color: "#27ae60", margin: "0 0 24px" }}>借阅成功！</h2>
+          <div style={{ fontSize: "56px", marginBottom: "16px" }}>📝</div>
+          <h2 style={{ color: "#3498db", margin: "0 0 24px" }}>预约成功！</h2>
 
           <div
             style={{
-              background: "#f0faf4",
+              background: "#f0f6fc",
               borderRadius: "8px",
               padding: "20px",
               textAlign: "left",
@@ -85,23 +63,23 @@ export default function BorrowPage() {
               <span style={infoValueStyle}>{book.title}</span>
             </div>
             <div style={infoRowStyle}>
-              <span style={infoLabelStyle}>借阅时间</span>
-              <span style={infoValueStyle}>{borrowDate}</span>
+              <span style={infoLabelStyle}>作者</span>
+              <span style={infoValueStyle}>{book.author}</span>
             </div>
             <div style={infoRowStyle}>
-              <span style={infoLabelStyle}>借阅时长</span>
-              <span style={infoValueStyle}>{selectedDuration?.label}</span>
+              <span style={infoLabelStyle}>ISBN</span>
+              <span style={infoValueStyle}>{book.isbn}</span>
             </div>
             <div style={{ ...infoRowStyle, borderBottom: "none", paddingBottom: 0 }}>
-              <span style={infoLabelStyle}>应还日期</span>
-              <span style={{ ...infoValueStyle, color: "#e94560", fontWeight: 600 }}>
-                {returnDate}
+              <span style={infoLabelStyle}>预约日期</span>
+              <span style={infoValueStyle}>
+                {new Date().toISOString().split("T")[0]}
               </span>
             </div>
           </div>
 
           <p style={{ fontSize: "14px", color: "#e67e22", margin: "0 0 24px" }}>
-            ⚠️ 请在两个星期之内来取
+            ⚠️ 书到后会通知您，请在通知后两个星期之内来取
           </p>
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
@@ -158,11 +136,11 @@ export default function BorrowPage() {
           {book.title}
         </Link>
         <span style={{ margin: "0 8px" }}>/</span>
-        <span style={{ color: "#333" }}>借阅</span>
+        <span style={{ color: "#333" }}>预约</span>
       </div>
 
       <h2 style={{ fontSize: "22px", color: "#1a3a6b", margin: "0 0 20px" }}>
-        📋 借阅
+        📋 预约
       </h2>
 
       {/* 图书信息卡片 */}
@@ -189,7 +167,14 @@ export default function BorrowPage() {
           }}
         />
         <div>
-          <div style={{ fontSize: "16px", fontWeight: 600, color: "#1a3a6b", marginBottom: "4px" }}>
+          <div
+            style={{
+              fontSize: "16px",
+              fontWeight: 600,
+              color: "#1a3a6b",
+              marginBottom: "4px",
+            }}
+          >
             {book.title}
           </div>
           <div style={{ fontSize: "13px", color: "#888" }}>
@@ -203,8 +188,8 @@ export default function BorrowPage() {
               display: "inline-block",
               marginTop: "6px",
               fontSize: "12px",
-              color: book.status === "可借" ? "#27ae60" : "#e94560",
-              backgroundColor: book.status === "可借" ? "#e8f8ef" : "#fdecea",
+              color: "#e94560",
+              backgroundColor: "#fdecea",
               padding: "2px 10px",
               borderRadius: "8px",
             }}
@@ -214,143 +199,38 @@ export default function BorrowPage() {
         </div>
       </div>
 
-      {/* 取书提醒 */}
+      {/* 提示信息 */}
       <div
         style={{
-          background: "#fef9e7",
-          borderRadius: "8px",
-          padding: "12px 16px",
-          marginBottom: "20px",
-          fontSize: "14px",
-          color: "#7d6608",
-        }}
-      >
-        ⚠️ 请在两个星期之内来取
-      </div>
-
-      {/* 借阅表单 */}
-      <div
-        style={{
+          textAlign: "center",
           background: "#fff",
           borderRadius: "10px",
           border: "1px solid #d0dff0",
-          padding: "24px",
+          padding: "40px 24px",
         }}
       >
-        {/* 借阅时间 */}
-        <div style={{ marginBottom: "20px" }}>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              color: "#1a3a6b",
-              marginBottom: "8px",
-            }}
-          >
-            📅 借阅时间
-          </label>
-          <input
-            type="date"
-            value={borrowDate}
-            min={todayStr}
-            onChange={(e) => setBorrowDate(e.target.value)}
-            style={inputStyle}
-          />
-          <div style={{ fontSize: "12px", color: "#999", marginTop: "4px" }}>
-            默认今天，可自行调整
-          </div>
-        </div>
+        <div style={{ fontSize: "48px", marginBottom: "16px" }}>😔</div>
+        <p
+          style={{
+            fontSize: "17px",
+            color: "#555",
+            lineHeight: 1.8,
+            margin: "0 0 8px",
+          }}
+        >
+          不好意思，书借完了，是否预约？
+        </p>
+        <p
+          style={{
+            fontSize: "13px",
+            color: "#999",
+            margin: "0 0 32px",
+          }}
+        >
+          预约后书到会第一时间通知您
+        </p>
 
-        {/* 借阅时长 */}
-        <div style={{ marginBottom: "24px" }}>
-          <label
-            style={{
-              display: "block",
-              fontSize: "14px",
-              fontWeight: 600,
-              color: "#1a3a6b",
-              marginBottom: "8px",
-            }}
-          >
-            ⏱️ 借阅时长
-          </label>
-          <div style={{ display: "flex", gap: "10px" }}>
-            {DURATION_OPTIONS.map((opt) => {
-              const isSelected = duration === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  onClick={() => setDuration(opt.value)}
-                  style={{
-                    flex: 1,
-                    padding: "14px 12px",
-                    fontSize: "15px",
-                    fontWeight: isSelected ? 700 : 500,
-                    color: isSelected ? "#fff" : "#1a3a6b",
-                    backgroundColor: isSelected ? "#3498db" : "#f0f6fc",
-                    border: isSelected
-                      ? "2px solid #3498db"
-                      : "2px solid #d0dff0",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.borderColor = "#3498db";
-                      e.currentTarget.style.backgroundColor = "#e8f4fd";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.borderColor = "#d0dff0";
-                      e.currentTarget.style.backgroundColor = "#f0f6fc";
-                    }
-                  }}
-                >
-                  <div>{opt.label}</div>
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: 400,
-                      opacity: 0.7,
-                      marginTop: "2px",
-                    }}
-                  >
-                    {opt.desc}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 应还日期预览 */}
-        {borrowDate && duration !== null && (
-          <div
-            style={{
-              background: "#fef9e7",
-              borderRadius: "8px",
-              padding: "12px 16px",
-              marginBottom: "20px",
-              fontSize: "14px",
-              color: "#7d6608",
-            }}
-          >
-            📌 预计应还日期：
-            <strong style={{ color: "#e94560" }}>
-              {(() => {
-                const d = new Date(borrowDate);
-                d.setDate(d.getDate() + duration);
-                return d.toISOString().split("T")[0];
-              })()}
-            </strong>
-          </div>
-        )}
-
-        {/* 操作按钮 */}
-        <div style={{ display: "flex", gap: "12px" }}>
+        <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
           <button
             onClick={() => navigate(`/books/${book.id}`)}
             style={{
@@ -375,30 +255,27 @@ export default function BorrowPage() {
             ← 返回详情
           </button>
           <button
-            onClick={handleSubmit}
-            disabled={!canSubmit}
+            onClick={() => setSubmitted(true)}
             style={{
               flex: 1,
               padding: "12px 24px",
               fontSize: "15px",
               fontWeight: 600,
               color: "#fff",
-              backgroundColor: canSubmit ? "#e94560" : "#ccc",
+              backgroundColor: "#e94560",
               border: "none",
               borderRadius: "6px",
-              cursor: canSubmit ? "pointer" : "not-allowed",
+              cursor: "pointer",
               transition: "background-color 0.2s",
             }}
-            onMouseEnter={(e) => {
-              if (canSubmit)
-                e.currentTarget.style.backgroundColor = "#d63851";
-            }}
-            onMouseLeave={(e) => {
-              if (canSubmit)
-                e.currentTarget.style.backgroundColor = "#e94560";
-            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "#d63851")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "#e94560")
+            }
           >
-            确认借阅
+            确认预约
           </button>
         </div>
       </div>
@@ -406,25 +283,12 @@ export default function BorrowPage() {
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "12px 16px",
-  fontSize: "15px",
-  color: "#1a3a6b",
-  backgroundColor: "#f8fafc",
-  border: "2px solid #d0dff0",
-  borderRadius: "8px",
-  outline: "none",
-  boxSizing: "border-box",
-  transition: "border-color 0.2s",
-};
-
 const infoRowStyle: React.CSSProperties = {
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
   padding: "8px 0",
-  borderBottom: "1px solid #d5f0dc",
+  borderBottom: "1px solid #d5e4f0",
 };
 
 const infoLabelStyle: React.CSSProperties = {

@@ -206,7 +206,13 @@ export default function BookDetailPage() {
           {/* 操作按钮 */}
           <div style={{ display: "flex", gap: "12px" }}>
             <button
-              onClick={() => navigate(`/books/${book.id}/borrow`)}
+              onClick={() => {
+                if (book.status === "可借") {
+                  navigate(`/books/${book.id}/borrow`);
+                } else {
+                  navigate(`/books/${book.id}/reserve`);
+                }
+              }}
               style={{
                 padding: "10px 24px",
                 fontSize: "14px",
@@ -225,7 +231,7 @@ export default function BookDetailPage() {
                 (e.currentTarget.style.backgroundColor = "#e94560")
               }
             >
-              📋 借阅
+              📋 借阅/预约
             </button>
 
             <button
