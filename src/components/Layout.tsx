@@ -1,11 +1,15 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import userStore from "../store/user";
 
 export default function Layout() {
   const navigate = useNavigate();
-  const isAdmin = true; // TODO: 替换为实际的权限判断逻辑
+  const { role } = userStore();
+  const isAdmin = role === "admin"; // TODO: 替换为实际的权限判断逻辑
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div
+      style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
+    >
       {/* 顶部导航栏 */}
       <nav
         style={{

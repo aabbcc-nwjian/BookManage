@@ -2,17 +2,20 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import bgImage from "../../img/library.png";
 import { login, register } from "../../api/login";
+import userStore from "../../store/user";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<"login" | "register">("login");
+  const { setRole } = userStore();
 
   const toLogin = async () => {
     const res = await login({ username, password });
     console.log(res);
     if (res.code === 200) {
+      setRole(res.data.role);
       localStorage.setItem("token", res.data.token);
       navigate("/home");
     }
