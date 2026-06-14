@@ -20,6 +20,7 @@ export interface RecommendationList {
   items: RecommendedBook[];
 }
 
+/** 根据指定图书推荐其他图书，来源是借过该书的读者也借过的书。 */
 export const getRecommendationsByBook = (
   bookId: number,
   params?: RecommendationParams,
@@ -30,6 +31,7 @@ export const getRecommendationsByBook = (
   );
 };
 
+/** 获取指定分类下的热门图书推荐，按借阅次数排序。 */
 export const getRecommendationsByCategory = (
   params: CategoryRecommendationParams,
 ) => {
@@ -39,6 +41,7 @@ export const getRecommendationsByCategory = (
   );
 };
 
+/** 根据指定读者的借阅历史获取个性化图书推荐。 */
 export const getRecommendationsForReader = (
   readerId: number,
   params?: RecommendationParams,

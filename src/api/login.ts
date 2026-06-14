@@ -23,6 +23,7 @@ export interface RegisterParams {
   role?: "librarian" | "admin";
 }
 
+/** 用户登录，成功后返回 token 和当前用户信息。 */
 export const login = ({ username, password }: LoginParams) => {
   return apiClient.post<LoginResult>(
     "/auth/login",
@@ -31,6 +32,7 @@ export const login = ({ username, password }: LoginParams) => {
   );
 };
 
+/** 注册馆员或管理员账号；不传 role 时默认注册馆员。 */
 export const register = ({
   username,
   password,

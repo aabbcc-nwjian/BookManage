@@ -28,18 +28,22 @@ export interface CreateBorrowParams {
   reader_id: number;
 }
 
+/** 获取借阅记录列表，支持按读者、图书、状态和页码筛选。 */
 export const getBorrowList = (params?: BorrowListParams) => {
   return apiClient.get<PageData<BorrowRecord>>("/borrows", params);
 };
 
+/** 创建借阅记录，即为指定读者办理借书。 */
 export const createBorrow = (data: CreateBorrowParams) => {
   return apiClient.post<BorrowRecord>("/borrows", data);
 };
 
+/** 办理指定借阅记录的还书操作，并触发后端预约通知逻辑。 */
 export const returnBook = (borrowId: number) => {
   return apiClient.post<BorrowRecord>(`/borrows/${borrowId}/return`);
 };
 
+/** 获取所有逾期未还的借阅记录，需要馆员或管理员权限。 */
 export const getOverdueBorrowList = (params?: PageParams) => {
   return apiClient.get<PageData<BorrowRecord>>("/borrows/overdue", params);
 };

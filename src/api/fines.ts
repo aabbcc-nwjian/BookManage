@@ -20,10 +20,12 @@ export interface FineListParams extends PageParams {
   status?: FineStatus;
 }
 
+/** 获取罚款记录列表，支持按读者、缴费状态和页码筛选。 */
 export const getFineList = (params?: FineListParams) => {
   return apiClient.get<PageData<FineRecord>>("/fines", params);
 };
 
+/** 缴纳指定罚款；普通读者只能缴纳自己的罚款。 */
 export const payFine = (fineId: number) => {
   return apiClient.post<FineRecord>(`/fines/${fineId}/pay`);
 };
