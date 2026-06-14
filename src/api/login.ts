@@ -1,19 +1,44 @@
 import { apiClient } from "./request";
-export const login = ({
-  username,
-  password,
-}: {
+
+export interface UserInfo {
+  id: number;
+  username: string;
+  role: "admin" | "librarian" | string;
+  is_active: boolean;
+}
+
+export interface LoginParams {
   username: string;
   password: string;
-}) => {
-  return apiClient.post<any>("/auth/login", { username, password }, { skipAuth: true });
+}
+
+export interface LoginResult {
+  token: string;
+  user: UserInfo;
+}
+
+export interface RegisterParams {
+  username: string;
+  password: string;
+  role?: "librarian" | "admin";
+}
+
+export const login = ({ username, password }: LoginParams) => {
+  return apiClient.post<LoginResult>(
+    "/auth/login",
+    { username, password },
+    { skipAuth: true },
+  );
 };
+
 export const register = ({
   username,
   password,
-}: {
-  username: string;
-  password: string;
-}) => {
-  return apiClient.post<any>("/auth/register", { username, password }, { skipAuth: true });
+  role = "librarian",
+}: RegisterParams) => {
+  return apiClient.post<UserInfo>(
+    "/auth/register",
+    { username, password, role },
+    { skipAuth: true },
+  );
 };

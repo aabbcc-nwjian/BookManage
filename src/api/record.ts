@@ -1,7 +1,24 @@
-import { apiClient } from "./request";
-export const getReservationList = () => {
-  return apiClient.get<any>("/reservations");
-};
-export const getBorrowList = () => {
-  return apiClient.get<any>("/borrows");
-};
+export {
+  createReservation,
+  cancelReservation,
+  getReservationList,
+} from "./reservations";
+export type {
+  CreateReservationParams,
+  ReservationListParams,
+  ReservationRecord,
+  ReservationStatus,
+} from "./reservations";
+
+export {
+  createBorrow,
+  getBorrowList,
+  getOverdueBorrowList,
+  returnBook,
+} from "./borrows";
+export type {
+  BorrowListParams,
+  BorrowRecord,
+  BorrowStatus,
+  CreateBorrowParams,
+} from "./borrows";

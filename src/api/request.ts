@@ -1,21 +1,22 @@
 export interface RequestConfig {
   url: string;
   method: "GET" | "POST" | "PUT" | "DELETE";
-  data?: any;
-  params?: any;
+  data?: unknown;
+  params?: object;
   header?: Record<string, string>;
   timeout?: number;
   skipAuth?: boolean;
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   code: number;
   data: T;
+  message: string;
   msg: string;
 }
 
 class ApiRequest {
-  private baseURL: string;
+  readonly baseURL: string;
   private defaultTimeout: number;
 
   constructor(baseUrl: string, timeout: number = 10000) {
@@ -24,11 +25,21 @@ class ApiRequest {
   }
 
   async request<T>(config: RequestConfig): Promise<ApiResponse<T>> {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(
+      () => controller.abort(),
+      config.timeout || this.defaultTimeout,
+    );
+
     try {
+      const isFormData = config.data instanceof FormData;
       const headers: Record<string, string> = {
-        "Content-Type": "application/json;charset=UTF-8",
         ...config.header,
       };
+
+      if (!isFormData) {
+        headers["Content-Type"] = "application/json;charset=UTF-8";
+      }
 
       if (!config.skipAuth && !config.url.includes("/auth/")) {
         const token = this.getToken();
@@ -41,47 +52,62 @@ class ApiRequest {
 
       // 处理 URL 参数
       if (config.params) {
-        const queryString = Object.keys(config.params)
+        const params = config.params as Record<string, unknown>;
+        const queryString = Object.keys(params)
+          .filter((key) => {
+            const value = params[key];
+            return value !== undefined && value !== null && value !== "";
+          })
           .map(
             (key) =>
-              `${encodeURIComponent(key)}=${encodeURIComponent(config.params[key])}`,
+              `${encodeURIComponent(key)}=${encodeURIComponent(String(params[key]))}`,
           )
           .join("&");
-        url += (url.includes("?") ? "&" : "?") + queryString;
+        if (queryString) {
+          url += (url.includes("?") ? "&" : "?") + queryString;
+        }
       }
 
       // 配置 fetch 选项
       const fetchOptions: RequestInit = {
         method: config.method,
         headers,
+        signal: controller.signal,
       };
 
       // 添加请求体（POST/PUT 请求）
       if (
-        config.data &&
+        config.data !== undefined &&
         (config.method === "POST" || config.method === "PUT")
       ) {
-        fetchOptions.body = JSON.stringify(config.data);
+        fetchOptions.body = isFormData
+          ? (config.data as FormData)
+          : JSON.stringify(config.data);
       }
 
       // 发送请求
       const response = await fetch(url, fetchOptions);
+      const contentType = response.headers.get("content-type") || "";
 
-      // 处理超时
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(
-          () => reject(new Error("请求超时")),
-          config.timeout || this.defaultTimeout,
-        );
-      });
+      if (!contentType.includes("application/json")) {
+        const message = response.ok ? "success" : response.statusText;
+        return { code: response.status, message, msg: message, data: null as T };
+      }
 
-      const raceResult = await Promise.race([response, timeoutPromise]);
-      const result = (raceResult as Response).json() as Promise<ApiResponse<T>>;
+      const result = (await response.json()) as Omit<ApiResponse<T>, "msg"> & {
+        msg?: string;
+      };
 
-      return result;
-    } catch (error: any) {
+      return {
+        ...result,
+        message: result.message || result.msg || "",
+        msg: result.msg || result.message || "",
+      };
+    } catch (error) {
       console.error("API Request Error", error);
       throw error;
+    } finally {
+      window.clearTimeout(timeoutId);
     }
   }
 
@@ -100,7 +126,7 @@ class ApiRequest {
   // GET 请求
   get<T>(
     url: string,
-    params?: any,
+    params?: object,
     config?: Partial<RequestConfig>,
   ): Promise<ApiResponse<T>> {
     return this.request<T>({ url, method: "GET", params, ...config });
@@ -109,7 +135,7 @@ class ApiRequest {
   // POST 请求
   post<T>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: Partial<RequestConfig>,
   ): Promise<ApiResponse<T>> {
     return this.request<T>({ url, method: "POST", data, ...config });
@@ -118,7 +144,7 @@ class ApiRequest {
   // PUT 请求
   put<T>(
     url: string,
-    data?: any,
+    data?: unknown,
     config?: Partial<RequestConfig>,
   ): Promise<ApiResponse<T>> {
     return this.request<T>({ url, method: "PUT", data, ...config });
@@ -133,8 +159,12 @@ class ApiRequest {
   }
 }
 
-// 创建 API 实例（请替换为你的实际 API 地址）
-export const apiClient = new ApiRequest("http://121.40.61.253/api");
+const DEFAULT_BASE_URL = "http://121.40.61.253/api";
+
+// 创建 API 实例
+export const apiClient = new ApiRequest(
+  import.meta.env.VITE_API_BASE_URL || DEFAULT_BASE_URL,
+);
 
 // 导出便捷方法
 export const request = <T>(config: RequestConfig) =>
@@ -142,7 +172,7 @@ export const request = <T>(config: RequestConfig) =>
 
 export const get = <T>(
   url: string,
-  params?: any,
+  params?: object,
   config?: Partial<RequestConfig>,
 ) => {
   return apiClient.get<T>(url, params, config);
@@ -150,7 +180,7 @@ export const get = <T>(
 
 export const post = <T>(
   url: string,
-  data?: any,
+  data?: unknown,
   config?: Partial<RequestConfig>,
 ) => {
   return apiClient.post<T>(url, data, config);
@@ -158,7 +188,7 @@ export const post = <T>(
 
 export const put = <T>(
   url: string,
-  data?: any,
+  data?: unknown,
   config?: Partial<RequestConfig>,
 ) => {
   return apiClient.put<T>(url, data, config);
