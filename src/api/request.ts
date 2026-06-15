@@ -166,10 +166,11 @@ export const apiClient = new ApiRequest(
   import.meta.env.VITE_API_BASE_URL || DEFAULT_BASE_URL,
 );
 
-// 导出便捷方法
+/** 通用请求入口，可手动指定请求地址、方法、参数和请求体。 */
 export const request = <T>(config: RequestConfig) =>
   apiClient.request<T>(config);
 
+/** 发送 GET 请求，常用于查询列表或详情。 */
 export const get = <T>(
   url: string,
   params?: object,
@@ -178,6 +179,7 @@ export const get = <T>(
   return apiClient.get<T>(url, params, config);
 };
 
+/** 发送 POST 请求，常用于新增数据或触发业务动作。 */
 export const post = <T>(
   url: string,
   data?: unknown,
@@ -186,6 +188,7 @@ export const post = <T>(
   return apiClient.post<T>(url, data, config);
 };
 
+/** 发送 PUT 请求，常用于更新已有数据。 */
 export const put = <T>(
   url: string,
   data?: unknown,
@@ -194,6 +197,7 @@ export const put = <T>(
   return apiClient.put<T>(url, data, config);
 };
 
+/** 发送 DELETE 请求，常用于删除资源。 */
 export const del = <T>(url: string, config?: Partial<RequestConfig>) => {
   return apiClient.delete<T>(url, config);
 };
