@@ -117,6 +117,21 @@ export default function Layout() {
           罚款记录
         </NavLink>
 
+        <NavLink
+          to="/my"
+          style={({ isActive }) => ({
+            color: isActive ? "#e94560" : "#ccc",
+            textDecoration: "none",
+            fontSize: "15px",
+            fontWeight: isActive ? 600 : 400,
+            padding: "6px 12px",
+            borderRadius: "6px",
+            transition: "all 0.2s",
+          })}
+        >
+          我的
+        </NavLink>
+
         {/* 管理员入口（仅管理员可见） */}
         {isAdmin && (
           <NavLink
@@ -139,7 +154,7 @@ export default function Layout() {
 
         {/* 右侧操作区 */}
         <NavLink
-          to="/login"
+          to={username ? "/my" : "/login"}
           style={({ isActive }) => ({
             color: isActive ? "#e94560" : "#ccc",
             textDecoration: "none",

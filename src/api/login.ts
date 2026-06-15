@@ -42,3 +42,18 @@ export const register = ({
     { skipAuth: true },
   );
 };
+
+export interface ChangePasswordParams {
+  old_password: string;
+  new_password: string;
+}
+
+export const changePassword = ({
+  old_password,
+  new_password,
+}: ChangePasswordParams) => {
+  return apiClient.put<null>(
+    "/auth/password",
+    { old_password, new_password },
+  );
+};

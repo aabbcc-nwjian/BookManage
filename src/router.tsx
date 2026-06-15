@@ -14,6 +14,7 @@ const FineRecords = lazy(() => import("./pages/fineRecords/FineRecordsPage"));
 const Borrow = lazy(() => import("./pages/borrow/BorrowPage"));
 const Reserve = lazy(() => import("./pages/reserve/ReservePage"));
 const Admin = lazy(() => import("./pages/admin/AdminPage"));
+const My = lazy(() => import("./pages/my/MyPage"));
 
 const routeConfig: RouteObject[] = [
   {
@@ -34,6 +35,7 @@ const routeConfig: RouteObject[] = [
       { path: "reserves", element: <ReserveRecords /> },
       { path: "fines", element: <FineRecords /> },
       { path: "admin", element: <Admin /> },
+      { path: "my", element: <My /> },
     ],
   },
 ];
