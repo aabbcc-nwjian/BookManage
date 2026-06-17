@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { addBook, getBookList, removeBook, updateBook } from "../../api/books";
+import { addBook, getBookList, removeBook, updateBook, uploadBookCover } from "../../api/books";
 import type { AddBookParams, Book, UpdateBookParams } from "../../api/books";
 import useBookStore from "../../store/books";
 
@@ -345,7 +345,17 @@ function AdminBookForm({
     book?.shelf_location || "",
   );
   const [description, setDescription] = useState(book?.description || "");
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCoverFile(file);
+      setCoverPreview(URL.createObjectURL(file));
+    }
+  };
 
   const handleSubmit = async () => {
     if (
@@ -419,6 +429,24 @@ function AdminBookForm({
         if (res.code !== 201 && res.code !== 200) {
           alert(res.message || "添加失败");
           return;
+        }
+
+        // 新建图书后上传封面
+        if (coverFile && res.data?.id) {
+          try {
+            await uploadBookCover(res.data.id, coverFile);
+          } catch {
+            console.warn("封面上传失败，图书已创建");
+          }
+        }
+      }
+
+      // 编辑图书时上传新封面
+      if (isEdit && coverFile && book) {
+        try {
+          await uploadBookCover(book.id, coverFile);
+        } catch {
+          console.warn("封面上传失败");
         }
       }
 
@@ -519,6 +547,62 @@ function AdminBookForm({
           onChange={setPages}
           type="number"
         />
+      </div>
+
+      {/* 封面上传 */}
+      <div style={{ marginBottom: "20px" }}>
+        <label style={labelStyle}>图书封面</label>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <label
+            style={{
+              display: "inline-block",
+              padding: "8px 18px",
+              fontSize: "13px",
+              fontWeight: 500,
+              color: "#3498db",
+              backgroundColor: "#f0f6fc",
+              border: "1px dashed #3498db",
+              borderRadius: "6px",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#e3f0fa";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#f0f6fc";
+            }}
+          >
+            {isEdit ? "更换封面图片" : "选择封面图片"}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleCoverChange}
+              style={{ display: "none" }}
+            />
+          </label>
+          {coverPreview && (
+            <div
+              style={{
+                width: "60px",
+                height: "85px",
+                borderRadius: "4px",
+                background: `url(${coverPreview}) center / cover no-repeat`,
+                border: "1px solid #d0dff0",
+              }}
+            />
+          )}
+          {!coverPreview && isEdit && book?.has_cover && (
+            <span style={{ fontSize: "12px", color: "#999" }}>
+              已上传封面，可选择新图片替换
+            </span>
+          )}
+          {coverFile && (
+            <span style={{ fontSize: "12px", color: "#888" }}>
+              {coverFile.name}
+            </span>
+          )}
+        </div>
       </div>
 
       <div style={{ marginBottom: "20px" }}>
