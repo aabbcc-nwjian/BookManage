@@ -21,7 +21,7 @@ export default function MyPage() {
   // 挂失状态
   const readerId = Number(localStorage.getItem("reader_id")) || 0;
   const [isLost, setIsLost] = useState(false);
-  const [lostLoading, setLostLoading] = useState(true); // 初始加载状态
+  const [lostLoading, setLostLoading] = useState(true);
   const [lostSubmitting, setLostSubmitting] = useState(false);
   const [lostMsg, setLostMsg] = useState<{
     type: "success" | "error";
@@ -67,7 +67,6 @@ export default function MyPage() {
       }
     } else {
       // 申请挂失
-      if (!window.confirm("确定要挂失您的读者证吗？挂失后将无法借阅图书。")) return;
       setLostSubmitting(true);
       setLostMsg(null);
       try {
