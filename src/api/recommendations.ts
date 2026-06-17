@@ -1,4 +1,5 @@
 import { apiClient } from "./request";
+import type { Book } from "./books";
 
 export interface RecommendationParams {
   limit?: number;
@@ -17,7 +18,7 @@ export interface RecommendedBook {
 }
 
 export interface RecommendationList {
-  items: RecommendedBook[];
+  items: Book[];
 }
 
 /** 根据指定图书推荐其他图书，来源是借过该书的读者也借过的书。 */
