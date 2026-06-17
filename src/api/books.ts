@@ -30,6 +30,7 @@ export interface Book {
   available_quantity: number;
   shelf_location: string;
   status: string;
+  borrow_count?: number;
 }
 
 export interface BookListParams extends PageParams {

@@ -1,8 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getAllBooks, getApiBookById } from "../../data/books";
 import { getBookCoverUrl } from "../../api";
 import coverDefault from "../../img/threeBody.jpg";
+import {
+  getRecommendationsByCategory,
+  getRecommendationsForReader,
+} from "../../api";
+import type { Book } from "../../api";
 
 const books = getAllBooks();
 
@@ -31,14 +36,28 @@ export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
+  const [categoryBooks, setCategoryBooks] = useState<Book[]>([]);
+  const [readerBooks, setReaderBooks] = useState<Book[]>([]);
 
   const book = id ? getApiBookById(id) : undefined;
+  useEffect(() => {
+    getRecommendationsByCategory({
+      category: book?.category || "",
+    }).then((res) => {
+      console.log("分类推荐:", res.data.items);
+      setCategoryBooks(res.data.items);
+    });
+    getRecommendationsForReader(1).then((res) => {
+      console.log("读者推荐:", res.data.items);
+      setReaderBooks(res.data.items);
+    });
+  }, [book?.category]);
 
   // "大家都在看"：排除当前图书，取推荐指数最高的 3 本
-  const topRated = books.filter((b) => b.id !== id).slice(0, 3);
+  const topRated = categoryBooks.filter((b) => b.id !== Number(id)).slice(0, 3);
 
   // "猜你喜欢"：基于当前图书 ID 的伪随机推荐（TODO: 后续接入真实推荐算法）
-  const youMayLike = useMemo(() => (id ? getYouMayLike(id, 3) : []), [id]);
+  const youMayLike = readerBooks.filter((b) => b.id !== Number(id)).slice(0, 3);
 
   if (!book) {
     return (
@@ -66,7 +85,7 @@ export default function BookDetailPage() {
     );
   }
 
-  const displayRating = book.rating + (liked ? 1 : 0);
+  const displayRating = book.borrow_count || 0 + (liked ? 1 : 0);
 
   return (
     <div
@@ -472,7 +491,7 @@ export default function BookDetailPage() {
                           <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                           <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
                         </svg>
-                        {b.rating}
+                        {b.borrow_count}
                       </span>
                     </div>
                   </div>
@@ -603,7 +622,7 @@ export default function BookDetailPage() {
                           <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
                           <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
                         </svg>
-                        {b.rating}
+                        {b.borrow_count}
                       </span>
                     </div>
                   </div>
