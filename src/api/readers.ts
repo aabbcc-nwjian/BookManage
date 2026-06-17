@@ -6,6 +6,7 @@ export type ReaderStatus = "active" | "lost" | "disabled";
 export interface Reader {
   id: number;
   card_number: string;
+  card_status: string;
   name: string;
   phone: string;
   email: string;
@@ -61,10 +62,10 @@ export const updateReader = (readerId: number, data: UpdateReaderParams) => {
 
 /** 将指定读者证标记为挂失。 */
 export const reportReaderLost = (readerId: number) => {
-  return apiClient.post<null>(`/user/is_active/${readerId}/lost`);
+  return apiClient.post<null>(`/auth/${readerId}/card-lost`);
 };
 
 /** 恢复指定读者证为可用状态，需要馆员或管理员权限。 */
 export const activateReader = (readerId: number) => {
-  return apiClient.post<null>(`/readers/${readerId}/activate`);
+  return apiClient.post<null>(`/auth/${readerId}/card-restore`);
 };

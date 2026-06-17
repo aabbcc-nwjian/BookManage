@@ -47,6 +47,12 @@ class ApiRequest {
           headers.Authorization = `Bearer ${token}`;
         }
       }
+      if (config.url.includes("/auth")) {
+        const token = this.getToken();
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+      }
 
       let url = this.baseURL + config.url;
 
@@ -91,7 +97,12 @@ class ApiRequest {
 
       if (!contentType.includes("application/json")) {
         const message = response.ok ? "success" : response.statusText;
-        return { code: response.status, message, msg: message, data: null as T };
+        return {
+          code: response.status,
+          message,
+          msg: message,
+          data: null as T,
+        };
       }
 
       const result = (await response.json()) as Omit<ApiResponse<T>, "msg"> & {

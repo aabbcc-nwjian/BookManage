@@ -37,7 +37,8 @@ export default function MyPage() {
     getReaderDetail(readerId)
       .then((res) => {
         if (res.code === 200) {
-          setIsLost(res.data.status === "lost");
+          console.log(res.data);
+          setIsLost(res.data.card_status === "lost");
         }
       })
       .finally(() => setLostLoading(false));
@@ -51,6 +52,7 @@ export default function MyPage() {
       setLostMsg(null);
       try {
         const res = await activateReader(readerId);
+        console.log(res);
         if (res.code === 200) {
           setIsLost(false);
           setLostMsg({
@@ -74,6 +76,7 @@ export default function MyPage() {
       setLostMsg(null);
       try {
         const res = await reportReaderLost(readerId);
+        console.log(res);
         if (res.code === 200) {
           setIsLost(true);
           setLostMsg({
