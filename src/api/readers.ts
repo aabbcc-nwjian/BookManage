@@ -46,7 +46,7 @@ export const getReaderList = (params?: ReaderListParams) => {
 
 /** 获取指定读者的详细信息。 */
 export const getReaderDetail = (readerId: number) => {
-  return apiClient.get<Reader>(`/readers/${readerId}`);
+  return apiClient.get<Reader>(`/auth/${readerId}`);
 };
 
 /** 为读者办证并创建读者档案。 */
@@ -61,7 +61,7 @@ export const updateReader = (readerId: number, data: UpdateReaderParams) => {
 
 /** 将指定读者证标记为挂失。 */
 export const reportReaderLost = (readerId: number) => {
-  return apiClient.post<null>(`/readers/${readerId}/lost`);
+  return apiClient.post<null>(`/user/is_active/${readerId}/lost`);
 };
 
 /** 恢复指定读者证为可用状态，需要馆员或管理员权限。 */

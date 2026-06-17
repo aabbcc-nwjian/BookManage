@@ -53,7 +53,10 @@ export default function MyPage() {
         const res = await activateReader(readerId);
         if (res.code === 200) {
           setIsLost(false);
-          setLostMsg({ type: "success", text: "已取消挂失，读者证恢复正常使用。" });
+          setLostMsg({
+            type: "success",
+            text: "已取消挂失，读者证恢复正常使用。",
+          });
         } else {
           setLostMsg({
             type: "error",
@@ -73,7 +76,10 @@ export default function MyPage() {
         const res = await reportReaderLost(readerId);
         if (res.code === 200) {
           setIsLost(true);
-          setLostMsg({ type: "success", text: "挂失成功！您的读者证已暂停使用。" });
+          setLostMsg({
+            type: "success",
+            text: "挂失成功！您的读者证已暂停使用。",
+          });
         } else {
           setLostMsg({
             type: "error",
@@ -326,22 +332,14 @@ export default function MyPage() {
                 padding: "10px 22px",
                 fontSize: "13px",
                 fontWeight: 500,
-                color: lostSubmitting
-                  ? "#ccc"
-                  : isLost
-                    ? "#27ae60"
-                    : "#e67e22",
+                color: lostSubmitting ? "#ccc" : isLost ? "#27ae60" : "#e67e22",
                 backgroundColor: lostSubmitting
                   ? "#fafafa"
                   : isLost
                     ? "#f0faf4"
                     : "#fff8f0",
                 border: `1px solid ${
-                  lostSubmitting
-                    ? "#e8e8e8"
-                    : isLost
-                      ? "#b7ebc8"
-                      : "#f0c78e"
+                  lostSubmitting ? "#e8e8e8" : isLost ? "#b7ebc8" : "#f0c78e"
                 }`,
                 borderRadius: "8px",
                 cursor: lostSubmitting ? "not-allowed" : "pointer",
@@ -366,9 +364,7 @@ export default function MyPage() {
                   : "#f0c78e";
               }}
             >
-              <span style={{ fontSize: "18px" }}>
-                {isLost ? "🔓" : "🔒"}
-              </span>
+              <span style={{ fontSize: "18px" }}>{isLost ? "🔓" : "🔒"}</span>
               {lostSubmitting
                 ? isLost
                   ? "取消中…"
@@ -603,8 +599,7 @@ export default function MyPage() {
             e.currentTarget.style.transform = "translateY(-3px)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow =
-              "0 2px 8px rgba(26,58,107,0.04)";
+            e.currentTarget.style.boxShadow = "0 2px 8px rgba(26,58,107,0.04)";
             e.currentTarget.style.transform = "";
           }}
         >
@@ -643,8 +638,7 @@ export default function MyPage() {
             e.currentTarget.style.transform = "translateY(-3px)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow =
-              "0 2px 8px rgba(26,58,107,0.04)";
+            e.currentTarget.style.boxShadow = "0 2px 8px rgba(26,58,107,0.04)";
             e.currentTarget.style.transform = "";
           }}
         >
@@ -683,8 +677,7 @@ export default function MyPage() {
             e.currentTarget.style.transform = "translateY(-3px)";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.boxShadow =
-              "0 2px 8px rgba(26,58,107,0.04)";
+            e.currentTarget.style.boxShadow = "0 2px 8px rgba(26,58,107,0.04)";
             e.currentTarget.style.transform = "";
           }}
         >
