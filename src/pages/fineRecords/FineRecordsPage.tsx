@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getFineList, getBookList } from "../../api";
+import { getFineList, getBookList, payFine } from "../../api";
 import type { FineRecord } from "../../api";
 import { getApiBookById } from "../../data/books";
 import useBookStore from "../../store/books";
@@ -53,7 +53,11 @@ const STATUS_MAP: Record<string, { color: string; bg: string; text: string }> =
 
 export default function FineRecordsPage() {
   const [filter, setFilter] = useState("全部");
-  useEffect(() => {
+  const [records, setRecords] = useState<FineRecord[]>([]);
+  const [payingIds, setPayingIds] = useState<Set<number>>(new Set());
+  const [payingAll, setPayingAll] = useState(false);
+
+  const fetchRecords = () => {
     getFineList().then((res) => {
       console.log("罚款记录:", res.data.items);
       setRecords(res.data.items);
@@ -62,16 +66,48 @@ export default function FineRecordsPage() {
       useBookStore.setState({ books: res.data.items });
       console.log("图书列表:", res.data.items);
     });
+  };
+
+  useEffect(() => {
+    fetchRecords();
   }, []);
 
-  const [records, setRecords] = useState<FineRecord[]>([]);
+  /** 缴纳单笔罚款 */
+  const handlePayOne = async (fineId: number) => {
+    setPayingIds((prev) => new Set(prev).add(fineId));
+    try {
+      await payFine(fineId);
+      fetchRecords();
+    } finally {
+      setPayingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(fineId);
+        return next;
+      });
+    }
+  };
+
+  /** 一键缴纳所有未缴罚款 */
+  const handlePayAll = async () => {
+    const unpaidIds = records
+      .filter((r) => r.status === "unpaid")
+      .map((r) => r.id);
+    if (unpaidIds.length === 0) return;
+    setPayingAll(true);
+    try {
+      await Promise.all(unpaidIds.map((id) => payFine(id)));
+      fetchRecords();
+    } finally {
+      setPayingAll(false);
+    }
+  };
 
   const filtered =
     filter === "全部" ? records : records.filter((r) => r.status === filter);
 
-  const totalUnpaid = records
-    .filter((f) => f.status === "unpaid")
-    .reduce((sum, f) => sum + f.amount, 0);
+  const unpaidRecords = records.filter((f) => f.status === "unpaid");
+  const unpaidCount = unpaidRecords.length;
+  const totalUnpaid = unpaidRecords.reduce((sum, f) => sum + f.amount, 0);
 
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto" }}>
@@ -96,19 +132,43 @@ export default function FineRecordsPage() {
           💰 罚款记录
         </h2>
 
-        {/* 待缴总额 */}
-        <div
-          style={{
-            padding: "8px 20px",
-            borderRadius: "8px",
-            backgroundColor: "#fff2f0",
-            border: "1px solid #ffccc7",
-            fontSize: "14px",
-            color: "#ff4d4f",
-            fontWeight: 600,
-          }}
-        >
-          待缴总额：¥{totalUnpaid.toFixed(2)}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {/* 待缴总额 */}
+          <div
+            style={{
+              padding: "8px 20px",
+              borderRadius: "8px",
+              backgroundColor: "#fff2f0",
+              border: "1px solid #ffccc7",
+              fontSize: "14px",
+              color: "#ff4d4f",
+              fontWeight: 600,
+            }}
+          >
+            待缴总额：¥{totalUnpaid.toFixed(2)}
+          </div>
+
+          {/* 一键缴纳 */}
+          {unpaidCount > 0 && (
+            <button
+              onClick={handlePayAll}
+              disabled={payingAll}
+              style={{
+                padding: "8px 20px",
+                borderRadius: "8px",
+                border: "1px solid #e94560",
+                backgroundColor: "#e94560",
+                color: "#fff",
+                fontSize: "14px",
+                fontWeight: 600,
+                cursor: payingAll ? "not-allowed" : "pointer",
+                opacity: payingAll ? 0.6 : 1,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {payingAll ? "缴纳中…" : `一键缴纳（${unpaidCount}笔）`}
+            </button>
+          )}
         </div>
       </div>
 
@@ -151,7 +211,7 @@ export default function FineRecordsPage() {
                 borderBottom: "1px solid #e8e8e8",
               }}
             >
-              {["罚款编号", "图书名称", "金额", "原因", "日期", "状态"].map(
+              {["罚款编号", "图书名称", "金额", "原因", "日期", "状态", "操作"].map(
                 (h) => (
                   <th
                     key={h}
@@ -237,13 +297,37 @@ export default function FineRecordsPage() {
                       {s.text}
                     </span>
                   </td>
+                  <td style={{ padding: "13px 16px" }}>
+                    {record.status === "unpaid" && (
+                      <button
+                        onClick={() => handlePayOne(record.id)}
+                        disabled={payingIds.has(record.id)}
+                        style={{
+                          padding: "4px 14px",
+                          borderRadius: "6px",
+                          border: "1px solid #e94560",
+                          backgroundColor: "#fff",
+                          color: "#e94560",
+                          fontSize: "13px",
+                          fontWeight: 500,
+                          cursor: payingIds.has(record.id)
+                            ? "not-allowed"
+                            : "pointer",
+                          opacity: payingIds.has(record.id) ? 0.6 : 1,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {payingIds.has(record.id) ? "缴纳中…" : "去缴纳"}
+                      </button>
+                    )}
+                  </td>
                 </tr>
               );
             })}
             {filtered.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   style={{
                     padding: "48px 0",
                     textAlign: "center",

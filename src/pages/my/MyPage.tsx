@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { changePassword } from "../../api/login";
+import { reportReaderLost, activateReader, getReaderDetail } from "../../api";
 
 export default function MyPage() {
   const navigate = useNavigate();
@@ -16,6 +17,77 @@ export default function MyPage() {
     text: string;
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // 挂失状态
+  const readerId = Number(localStorage.getItem("reader_id")) || 0;
+  const [isLost, setIsLost] = useState(false);
+  const [lostLoading, setLostLoading] = useState(true); // 初始加载状态
+  const [lostSubmitting, setLostSubmitting] = useState(false);
+  const [lostMsg, setLostMsg] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  // 页面加载时查询读者当前状态
+  useEffect(() => {
+    if (!readerId) {
+      setLostLoading(false);
+      return;
+    }
+    getReaderDetail(readerId)
+      .then((res) => {
+        if (res.code === 200) {
+          setIsLost(res.data.status === "lost");
+        }
+      })
+      .finally(() => setLostLoading(false));
+  }, [readerId]);
+
+  // 切换挂失状态：已挂失→取消挂失，未挂失→申请挂失
+  const handleToggleLost = async () => {
+    if (isLost) {
+      // 取消挂失
+      setLostSubmitting(true);
+      setLostMsg(null);
+      try {
+        const res = await activateReader(readerId);
+        if (res.code === 200) {
+          setIsLost(false);
+          setLostMsg({ type: "success", text: "已取消挂失，读者证恢复正常使用。" });
+        } else {
+          setLostMsg({
+            type: "error",
+            text: res.message || res.msg || "取消挂失失败，请重试",
+          });
+        }
+      } catch {
+        setLostMsg({ type: "error", text: "网络错误，请稍后重试" });
+      } finally {
+        setLostSubmitting(false);
+      }
+    } else {
+      // 申请挂失
+      if (!window.confirm("确定要挂失您的读者证吗？挂失后将无法借阅图书。")) return;
+      setLostSubmitting(true);
+      setLostMsg(null);
+      try {
+        const res = await reportReaderLost(readerId);
+        if (res.code === 200) {
+          setIsLost(true);
+          setLostMsg({ type: "success", text: "挂失成功！您的读者证已暂停使用。" });
+        } else {
+          setLostMsg({
+            type: "error",
+            text: res.message || res.msg || "挂失失败，请重试",
+          });
+        }
+      } catch {
+        setLostMsg({ type: "error", text: "网络错误，请稍后重试" });
+      } finally {
+        setLostSubmitting(false);
+      }
+    }
+  };
 
   // 动画 refs
   const profileCardRef = useRef<HTMLDivElement>(null);
@@ -235,6 +307,98 @@ export default function MyPage() {
             退出登录
           </button>
         </div>
+
+        {/* 挂失按钮区域 */}
+        {!lostLoading && (
+          <div
+            style={{
+              marginTop: "20px",
+              paddingTop: "18px",
+              borderTop: "1px solid #f0f0f0",
+            }}
+          >
+            <button
+              onClick={handleToggleLost}
+              disabled={lostSubmitting}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 22px",
+                fontSize: "13px",
+                fontWeight: 500,
+                color: lostSubmitting
+                  ? "#ccc"
+                  : isLost
+                    ? "#27ae60"
+                    : "#e67e22",
+                backgroundColor: lostSubmitting
+                  ? "#fafafa"
+                  : isLost
+                    ? "#f0faf4"
+                    : "#fff8f0",
+                border: `1px solid ${
+                  lostSubmitting
+                    ? "#e8e8e8"
+                    : isLost
+                      ? "#b7ebc8"
+                      : "#f0c78e"
+                }`,
+                borderRadius: "8px",
+                cursor: lostSubmitting ? "not-allowed" : "pointer",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                if (lostSubmitting) return;
+                e.currentTarget.style.backgroundColor = isLost
+                  ? "#e6f7ec"
+                  : "#fef0db";
+                e.currentTarget.style.borderColor = isLost
+                  ? "#27ae60"
+                  : "#e67e22";
+              }}
+              onMouseLeave={(e) => {
+                if (lostSubmitting) return;
+                e.currentTarget.style.backgroundColor = isLost
+                  ? "#f0faf4"
+                  : "#fff8f0";
+                e.currentTarget.style.borderColor = isLost
+                  ? "#b7ebc8"
+                  : "#f0c78e";
+              }}
+            >
+              <span style={{ fontSize: "18px" }}>
+                {isLost ? "🔓" : "🔒"}
+              </span>
+              {lostSubmitting
+                ? isLost
+                  ? "取消中…"
+                  : "挂失中…"
+                : isLost
+                  ? "已找回？取消挂失"
+                  : "卡掉了？申请挂失"}
+            </button>
+            {lostMsg && (
+              <div
+                style={{
+                  marginTop: "10px",
+                  padding: "8px 14px",
+                  borderRadius: "6px",
+                  fontSize: "13px",
+                  color: lostMsg.type === "success" ? "#27ae60" : "#e94560",
+                  backgroundColor:
+                    lostMsg.type === "success" ? "#f0faf4" : "#fff0f3",
+                  border:
+                    lostMsg.type === "success"
+                      ? "1px solid #b7ebc8"
+                      : "1px solid #ffccc7",
+                }}
+              >
+                {lostMsg.text}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ====== 修改密码卡片 ====== */}
