@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getAllBooks, getApiBookById } from "../../data/books";
+import { getApiBookById } from "../../data/books";
 import { getBookCoverUrl } from "../../api";
 import coverDefault from "../../img/threeBody.jpg";
 import {
@@ -9,8 +9,6 @@ import {
 } from "../../api";
 import type { Book } from "../../api";
 
-const books = getAllBooks();
-
 const CATEGORY_COLOR: Record<string, string> = {
   科幻: "#3498db",
   文学: "#e74c3c",
@@ -18,19 +16,6 @@ const CATEGORY_COLOR: Record<string, string> = {
   古典文学: "#8e44ad",
   历史: "#e67e22",
 };
-
-/** "猜你喜欢"，之后从后端get */
-function getYouMayLike(currentId: string, count: number) {
-  const others = books.filter((b) => b.id !== currentId);
-  // 用 id 的 charCode 之和作为种子做确定性打乱，方便调试
-  const seed = [...currentId].reduce((s, c) => s + c.charCodeAt(0), 0);
-  const shuffled = [...others].sort((a, b) => {
-    const ha = (a.id.charCodeAt(0) * seed) % 13;
-    const hb = (b.id.charCodeAt(0) * seed) % 13;
-    return ha - hb;
-  });
-  return shuffled.slice(0, count);
-}
 
 export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>();

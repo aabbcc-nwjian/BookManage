@@ -3,46 +3,6 @@ import { Link } from "react-router-dom";
 import { getReservationList } from "../../api/record";
 import type { ReservationRecord } from "../../api/record";
 
-// 模拟预约数据
-const MOCK_RESERVES = [
-  {
-    id: "RS001",
-    bookTitle: "红楼梦",
-    bookId: "4",
-    reserveDate: "2026-06-08",
-    expireDate: "2026-06-15",
-    queuePosition: 1,
-    status: "待取书",
-  },
-  {
-    id: "RS002",
-    bookTitle: "三体",
-    bookId: "1",
-    reserveDate: "2026-06-05",
-    expireDate: "2026-06-12",
-    queuePosition: 2,
-    status: "预约中",
-  },
-  {
-    id: "RS003",
-    bookTitle: "JavaScript高级程序设计",
-    bookId: "3",
-    reserveDate: "2026-05-28",
-    expireDate: "2026-06-04",
-    queuePosition: 1,
-    status: "已取书",
-  },
-  {
-    id: "RS004",
-    bookTitle: "设计模式",
-    bookId: "5",
-    reserveDate: "2026-06-01",
-    expireDate: "2026-06-08",
-    queuePosition: 3,
-    status: "已取消",
-  },
-];
-
 const STATUS_MAP: Record<string, { color: string; bg: string; text: string }> =
   {
     waiting: { color: "#faad14", bg: "#fffbe6", text: "待取书" },

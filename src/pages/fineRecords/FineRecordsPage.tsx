@@ -5,46 +5,6 @@ import type { FineRecord } from "../../api";
 import { getApiBookById } from "../../data/books";
 import useBookStore from "../../store/books";
 
-// 模拟罚款数据
-const MOCK_FINES = [
-  {
-    id: "FN001",
-    bookTitle: "百年孤独",
-    bookId: "6",
-    amount: 5.0,
-    reason: "逾期归还",
-    date: "2026-06-05",
-    status: "未缴纳",
-  },
-  {
-    id: "FN002",
-    bookTitle: "活着",
-    bookId: "2",
-    amount: 10.0,
-    reason: "书籍污损",
-    date: "2026-05-20",
-    status: "已缴纳",
-  },
-  {
-    id: "FN003",
-    bookTitle: "三体",
-    bookId: "1",
-    amount: 3.5,
-    reason: "逾期归还",
-    date: "2026-04-15",
-    status: "已缴纳",
-  },
-  {
-    id: "FN004",
-    bookTitle: "设计模式",
-    bookId: "5",
-    amount: 20.0,
-    reason: "书籍遗失",
-    date: "2026-06-10",
-    status: "未缴纳",
-  },
-];
-
 const STATUS_MAP: Record<string, { color: string; bg: string; text: string }> =
   {
     unpaid: { color: "#ff4d4f", bg: "#fff2f0", text: "未缴纳" },
@@ -211,22 +171,28 @@ export default function FineRecordsPage() {
                 borderBottom: "1px solid #e8e8e8",
               }}
             >
-              {["罚款编号", "图书名称", "金额", "原因", "日期", "状态", "操作"].map(
-                (h) => (
-                  <th
-                    key={h}
-                    style={{
-                      padding: "13px 16px",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      color: "#555",
-                      textAlign: "left",
-                    }}
-                  >
-                    {h}
-                  </th>
-                ),
-              )}
+              {[
+                "罚款编号",
+                "图书名称",
+                "金额",
+                "原因",
+                "日期",
+                "状态",
+                "操作",
+              ].map((h) => (
+                <th
+                  key={h}
+                  style={{
+                    padding: "13px 16px",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    color: "#555",
+                    textAlign: "left",
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>

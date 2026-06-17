@@ -3,55 +3,6 @@ import { Link } from "react-router-dom";
 import { getBorrowList } from "../../api/record";
 import type { BorrowRecord } from "../../api/record";
 
-// 模拟借阅数据
-const MOCK_RECORDS = [
-  {
-    id: "BR001",
-    bookTitle: "三体",
-    bookId: "1",
-    borrowDate: "2026-05-20",
-    dueDate: "2026-06-20",
-    returnDate: null,
-    status: "借阅中",
-  },
-  {
-    id: "BR002",
-    bookTitle: "活着",
-    bookId: "2",
-    borrowDate: "2026-05-15",
-    dueDate: "2026-06-15",
-    returnDate: "2026-06-10",
-    status: "已归还",
-  },
-  {
-    id: "BR003",
-    bookTitle: "JavaScript高级程序设计",
-    bookId: "3",
-    borrowDate: "2026-05-10",
-    dueDate: "2026-06-10",
-    returnDate: "2026-06-08",
-    status: "已归还",
-  },
-  {
-    id: "BR004",
-    bookTitle: "设计模式",
-    bookId: "5",
-    borrowDate: "2026-06-01",
-    dueDate: "2026-07-01",
-    returnDate: null,
-    status: "借阅中",
-  },
-  {
-    id: "BR005",
-    bookTitle: "百年孤独",
-    bookId: "6",
-    borrowDate: "2026-04-25",
-    dueDate: "2026-05-25",
-    returnDate: null,
-    status: "逾期",
-  },
-];
-
 const STATUS_MAP: Record<string, { color: string; bg: string; text: string }> =
   {
     borrowed: { color: "#1890ff", bg: "#e6f7ff", text: "借阅中" },
