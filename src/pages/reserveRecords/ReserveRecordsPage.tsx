@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { getReservationList } from "../../api/record";
 import type { ReservationRecord } from "../../api/record";
+import { getBookList } from "../../api";
+import useBookStore from "../../store/books";
 
 const STATUS_MAP: Record<string, { color: string; bg: string; text: string }> =
   {
@@ -17,6 +19,9 @@ export default function ReserveRecordsPage() {
   const [records, setRecords] = useState<ReservationRecord[]>([]);
 
   useEffect(() => {
+    getBookList().then((res) => {
+      useBookStore.setState({ books: res.data.items });
+    });
     getReservationList().then((res) => {
       console.log("预约记录:", res.data.items);
       setRecords(res.data.items);

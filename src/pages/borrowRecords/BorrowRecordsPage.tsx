@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getBorrowList } from "../../api/record";
 import type { BorrowRecord } from "../../api/record";
+import { getBookList } from "../../api";
+import useBookStore from "../../store/books";
 
 const STATUS_MAP: Record<string, { color: string; bg: string; text: string }> =
   {
@@ -14,6 +16,9 @@ export default function BorrowRecordsPage() {
   const [filter, setFilter] = useState("全部");
   const [records, setRecords] = useState<BorrowRecord[]>([]);
   useEffect(() => {
+    getBookList().then((res) => {
+      useBookStore.setState({ books: res.data.items });
+    });
     getBorrowList().then((res) => {
       console.log("借阅记录:", res.data.items);
       setRecords(res.data.items);
