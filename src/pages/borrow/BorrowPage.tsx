@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getApiBookById } from "../../data/books";
+import { getBookCoverUrl } from "../../api";
 import coverDefault from "../../img/threeBody.jpg";
 import { borrowBook } from "../../api";
 
@@ -200,7 +201,7 @@ export default function BorrowPage() {
             width: "60px",
             height: "85px",
             flexShrink: 0,
-            background: `url(${coverDefault}) center / cover no-repeat`,
+            background: `url(${book.has_cover ? getBookCoverUrl(book.id) : coverDefault}) center / cover no-repeat`,
             backgroundColor: "#d0dce8",
             borderRadius: "4px",
           }}

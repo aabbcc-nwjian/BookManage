@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { getAllBooks, getApiBookById } from "../../data/books";
+import { getBookCoverUrl } from "../../api";
 import coverDefault from "../../img/threeBody.jpg";
 
 const books = getAllBooks();
@@ -111,7 +112,7 @@ export default function BookDetailPage() {
               margin: "10px",
               width: "300px",
               flexShrink: 0,
-              background: `url(${coverDefault}) center / cover no-repeat`,
+              background: `url(${book.has_cover ? getBookCoverUrl(book.id) : coverDefault}) center / cover no-repeat`,
               backgroundColor: "#d0dce8",
             }}
           />

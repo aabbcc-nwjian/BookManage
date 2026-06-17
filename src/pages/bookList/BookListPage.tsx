@@ -4,7 +4,7 @@ import { Link, useSearchParams } from "react-router-dom";
 //import type { Book } from "../../data/books";
 import bgImage from "../../img/bookList.png";
 import coverDefault from "../../img/threeBody.jpg";
-import { getBookList } from "../../api";
+import { getBookCoverUrl, getBookList } from "../../api";
 import type { Book } from "../../api";
 import useBookStore from "../../store/books";
 
@@ -44,17 +44,20 @@ export default function BookListPage() {
   const [history, setHistory] = useState<string[]>(loadHistory);
   const [showHistory, setShowHistory] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const cardListRef = useRef<HTMLDivElement>(null);
   const books = useBookStore((state) => state.books);
   const allCategories = useBookStore((state) => state.allCategories);
   const setBooks = useBookStore((state) => state.setBooks);
+
+  // 如果 store 已有数据就直接显示，没有才显示 loading
+  const hasInitialData = useRef(books.length > 0);
+  const [loading, setLoading] = useState(!hasInitialData.current);
 
   useEffect(() => {
     getBookList().then((res) => {
       const nextBooks = res.data.items;
       setBooks(nextBooks);
       console.log(res, nextBooks);
-    });
+    }).finally(() => setLoading(false));
   }, [setBooks]);
 
   // 当搜索词变化时同步更新 URL 参数
@@ -116,23 +119,6 @@ export default function BookListPage() {
       return matchSearch && matchCategory;
     });
   }, [books, search, category, statusFilter]);
-
-  // 书籍卡片从左到右展开动画
-  useEffect(() => {
-    const container = cardListRef.current;
-    if (!container) return;
-    const cards = container.children;
-    const easeOut = "cubic-bezier(0.25, 0.46, 0.45, 0.94)";
-    Array.from(cards).forEach((card, i) => {
-      (card as HTMLElement).animate(
-        [
-          { clipPath: "inset(0 100% 0 0)", opacity: 0 },
-          { clipPath: "inset(0 0 0 0)", opacity: 1 },
-        ],
-        { duration: 500, delay: i * 80, easing: easeOut, fill: "forwards" },
-      );
-    });
-  }, [filtered]);
 
   return (
     <div
@@ -401,10 +387,23 @@ export default function BookListPage() {
           共 {filtered.length} 本图书
         </div>
 
-        {/* 图书卡片列表（单列） */}
-        {filtered.length > 0 ? (
+        {/* 加载中 */}
+        {loading && (
           <div
-            ref={cardListRef}
+            style={{
+              textAlign: "center",
+              padding: "60px 0",
+              color: "rgba(255,255,255,0.7)",
+              fontSize: "15px",
+            }}
+          >
+            ⏳ 加载中...
+          </div>
+        )}
+
+        {/* 图书卡片列表（单列） */}
+        {!loading && filtered.length > 0 ? (
+          <div
             style={{
               display: "flex",
               flexDirection: "column",
@@ -423,8 +422,6 @@ export default function BookListPage() {
                   border: "1px solid rgba(255,255,255,0.2)",
                   background: "rgba(255,255,255,0.94)",
                   overflow: "hidden",
-                  clipPath: "inset(0 100% 0 0)",
-                  opacity: 0,
                   transition: "box-shadow 0.2s, transform 0.2s",
                 }}
                 onMouseEnter={(e) => {
@@ -443,7 +440,7 @@ export default function BookListPage() {
                     width: "120px",
                     minHeight: "160px",
                     flexShrink: 0,
-                    background: `url(${coverDefault}) center / cover no-repeat`,
+                    background: `url(${book.has_cover ? getBookCoverUrl(book.id) : coverDefault}) center / cover no-repeat`,
                     backgroundColor: "#e0e8f0",
                   }}
                 />
@@ -564,18 +561,18 @@ export default function BookListPage() {
               </Link>
             ))}
           </div>
-        ) : (
+        ) : !loading ? (
           <div
             style={{
               textAlign: "center",
               padding: "60px 0",
-              color: "#ccc",
+              color: "rgba(255,255,255,0.7)",
               fontSize: "14px",
             }}
           >
             📭 未找到匹配的图书
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

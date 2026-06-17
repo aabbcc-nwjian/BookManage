@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { addBook, getBookList, removeBook, updateBook } from "../../api/books";
 import type { AddBookParams, Book, UpdateBookParams } from "../../api/books";
 import useBookStore from "../../store/books";
@@ -8,6 +8,7 @@ import useBookStore from "../../store/books";
 //const allCategories = [...new Set(books.map((b) => b.category))];
 
 export default function AdminPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("全部");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -80,24 +81,41 @@ export default function AdminPage() {
         <h2 style={{ fontSize: "22px", color: "#1a3a6b", margin: 0 }}>
           ⚙️ 管理员页面
         </h2>
-        <button
-          onClick={() => {
-            setShowAddForm(!showAddForm);
-            setEditingId(null);
-          }}
-          style={{
-            padding: "10px 20px",
-            fontSize: "14px",
-            fontWeight: 600,
-            color: "#fff",
-            backgroundColor: showAddForm ? "#999" : "#27ae60",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-          }}
-        >
-          {showAddForm ? "取消" : "+ 添加图书"}
-        </button>
+        <div style={{ display: "flex", gap: "10px" }}>
+          <button
+            onClick={() => navigate("/return")}
+            style={{
+              padding: "10px 20px",
+              fontSize: "14px",
+              fontWeight: 600,
+              color: "#fff",
+              backgroundColor: "#27ae60",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+          >
+            📥 还书
+          </button>
+          <button
+            onClick={() => {
+              setShowAddForm(!showAddForm);
+              setEditingId(null);
+            }}
+            style={{
+              padding: "10px 20px",
+              fontSize: "14px",
+              fontWeight: 600,
+              color: "#fff",
+              backgroundColor: showAddForm ? "#999" : "#27ae60",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+            }}
+          >
+            {showAddForm ? "取消" : "+ 添加图书"}
+          </button>
+        </div>
       </div>
 
       {/* 添加 / 编辑图书表单 */}
