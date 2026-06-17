@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getBorrowList } from "../../api/record";
+import type { BorrowRecord } from "../../api/record";
 
 // 模拟借阅数据
 const MOCK_RECORDS = [
@@ -50,19 +52,29 @@ const MOCK_RECORDS = [
   },
 ];
 
-const STATUS_MAP: Record<string, { color: string; bg: string }> = {
-  借阅中: { color: "#1890ff", bg: "#e6f7ff" },
-  已归还: { color: "#52c41a", bg: "#f6ffed" },
-  逾期: { color: "#ff4d4f", bg: "#fff2f0" },
-};
+const STATUS_MAP: Record<string, { color: string; bg: string; text: string }> =
+  {
+    borrowed: { color: "#1890ff", bg: "#e6f7ff", text: "借阅中" },
+    returned: { color: "#52c41a", bg: "#f6ffed", text: "已归还" },
+    overdue: { color: "#ff4d4f", bg: "#fff2f0", text: "逾期" },
+  };
 
 export default function BorrowRecordsPage() {
   const [filter, setFilter] = useState("全部");
+  const [records, setRecords] = useState<BorrowRecord[]>([]);
+  useEffect(() => {
+    getBorrowList().then((res) => {
+      console.log("借阅记录:", res.data.items);
+      setRecords(res.data.items);
+    });
+  }, []);
+
+  function formatDate(dateStr: string): string {
+    return dateStr.split("T")[0];
+  }
 
   const filtered =
-    filter === "全部"
-      ? MOCK_RECORDS
-      : MOCK_RECORDS.filter((r) => r.status === filter);
+    filter === "全部" ? records : records.filter((r) => r.status === filter);
 
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto" }}>
@@ -89,8 +101,7 @@ export default function BorrowRecordsPage() {
               padding: "6px 18px",
               fontSize: "13px",
               borderRadius: "16px",
-              border:
-                filter === s ? "1px solid #e94560" : "1px solid #e0e0e0",
+              border: filter === s ? "1px solid #e94560" : "1px solid #e0e0e0",
               color: filter === s ? "#e94560" : "#666",
               backgroundColor: filter === s ? "#fff0f3" : "#fff",
               cursor: "pointer",
@@ -119,22 +130,27 @@ export default function BorrowRecordsPage() {
                 borderBottom: "1px solid #e8e8e8",
               }}
             >
-              {["记录编号", "图书名称", "借阅日期", "应还日期", "归还日期", "状态"].map(
-                (h) => (
-                  <th
-                    key={h}
-                    style={{
-                      padding: "13px 16px",
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      color: "#555",
-                      textAlign: "left",
-                    }}
-                  >
-                    {h}
-                  </th>
-                )
-              )}
+              {[
+                "记录编号",
+                "图书名称",
+                "借阅日期",
+                "应还日期",
+                "归还日期",
+                "状态",
+              ].map((h) => (
+                <th
+                  key={h}
+                  style={{
+                    padding: "13px 16px",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    color: "#555",
+                    textAlign: "left",
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -145,25 +161,49 @@ export default function BorrowRecordsPage() {
                   key={record.id}
                   style={{ borderBottom: "1px solid #f0f0f0" }}
                 >
-                  <td style={{ padding: "13px 16px", fontSize: "14px", color: "#888" }}>
+                  <td
+                    style={{
+                      padding: "13px 16px",
+                      fontSize: "14px",
+                      color: "#888",
+                    }}
+                  >
                     {record.id}
                   </td>
                   <td style={{ padding: "13px 16px", fontSize: "14px" }}>
                     <Link
-                      to={`/books/${record.bookId}`}
+                      to={`/books/${record.book_id}`}
                       style={{ color: "#1a3a6b", textDecoration: "none" }}
                     >
-                      {record.bookTitle}
+                      {record.book_title}
                     </Link>
                   </td>
-                  <td style={{ padding: "13px 16px", fontSize: "14px", color: "#555" }}>
-                    {record.borrowDate}
+                  <td
+                    style={{
+                      padding: "13px 16px",
+                      fontSize: "14px",
+                      color: "#555",
+                    }}
+                  >
+                    {formatDate(record.borrow_date)}
                   </td>
-                  <td style={{ padding: "13px 16px", fontSize: "14px", color: "#555" }}>
-                    {record.dueDate}
+                  <td
+                    style={{
+                      padding: "13px 16px",
+                      fontSize: "14px",
+                      color: "#555",
+                    }}
+                  >
+                    {formatDate(record.due_date)}
                   </td>
-                  <td style={{ padding: "13px 16px", fontSize: "14px", color: "#555" }}>
-                    {record.returnDate ?? "-"}
+                  <td
+                    style={{
+                      padding: "13px 16px",
+                      fontSize: "14px",
+                      color: "#555",
+                    }}
+                  >
+                    {record.return_date ?? "-"}
                   </td>
                   <td style={{ padding: "13px 16px" }}>
                     <span
@@ -177,7 +217,7 @@ export default function BorrowRecordsPage() {
                         backgroundColor: s.bg,
                       }}
                     >
-                      {record.status}
+                      {s.text}
                     </span>
                   </td>
                 </tr>

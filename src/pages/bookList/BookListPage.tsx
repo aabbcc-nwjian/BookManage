@@ -1,12 +1,15 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { getAllBooks } from "../../data/books";
-import type { Book } from "../../data/books";
+//import { getAllBooks } from "../../data/books";
+//import type { Book } from "../../data/books";
 import bgImage from "../../img/bookList.png";
 import coverDefault from "../../img/threeBody.jpg";
+import { getBookList } from "../../api";
+import type { Book } from "../../api";
+import useBookStore from "../../store/books";
 
-const books = getAllBooks();
-const allCategories = [...new Set(books.map((b) => b.category))];
+//const books = getAllBooks();
+//const allCategories = [...new Set(books.map((b) => b.category))];
 
 const CATEGORY_COLOR: Record<string, string> = {
   科幻: "#3498db",
@@ -42,6 +45,17 @@ export default function BookListPage() {
   const [showHistory, setShowHistory] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const cardListRef = useRef<HTMLDivElement>(null);
+  const books = useBookStore((state) => state.books);
+  const allCategories = useBookStore((state) => state.allCategories);
+  const setBooks = useBookStore((state) => state.setBooks);
+
+  useEffect(() => {
+    getBookList().then((res) => {
+      const nextBooks = res.data.items;
+      setBooks(nextBooks);
+      console.log(res, nextBooks);
+    });
+  }, [setBooks]);
 
   // 当搜索词变化时同步更新 URL 参数
   useEffect(() => {
@@ -101,7 +115,7 @@ export default function BookListPage() {
       const matchCategory = category === "全部" || book.category === category;
       return matchSearch && matchCategory;
     });
-  }, [search, category, statusFilter]);
+  }, [books, search, category, statusFilter]);
 
   // 书籍卡片从左到右展开动画
   useEffect(() => {
@@ -499,7 +513,7 @@ export default function BookListPage() {
                         margin: "0 0 8px",
                       }}
                     >
-                      {book.author} · {book.year}
+                      {book.author} · {book.published_date}
                     </p>
                     <p
                       style={{

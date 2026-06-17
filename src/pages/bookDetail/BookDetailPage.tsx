@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getBookById, getAllBooks } from "../../data/books";
+import { getAllBooks, getApiBookById } from "../../data/books";
 import coverDefault from "../../img/threeBody.jpg";
 
 const books = getAllBooks();
@@ -31,18 +31,13 @@ export default function BookDetailPage() {
   const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
 
-  const book = id ? getBookById(id) : undefined;
+  const book = id ? getApiBookById(id) : undefined;
 
   // "大家都在看"：排除当前图书，取推荐指数最高的 3 本
-  const topRated = books
-    .filter((b) => b.id !== id)
-    .slice(0, 3);
+  const topRated = books.filter((b) => b.id !== id).slice(0, 3);
 
   // "猜你喜欢"：基于当前图书 ID 的伪随机推荐（TODO: 后续接入真实推荐算法）
-  const youMayLike = useMemo(
-    () => (id ? getYouMayLike(id, 3) : []),
-    [id],
-  );
+  const youMayLike = useMemo(() => (id ? getYouMayLike(id, 3) : []), [id]);
 
   if (!book) {
     return (
@@ -179,7 +174,7 @@ export default function BookDetailPage() {
             </div>
 
             <p style={{ color: "#888", fontSize: "15px", margin: "0 0 20px" }}>
-              {book.author} · {book.year}
+              {book.author} · {book.published_date}
             </p>
 
             {/* 信息表格 */}
@@ -195,11 +190,29 @@ export default function BookDetailPage() {
               }}
             >
               <div>
-                <div style={{ fontSize: "12px", color: "#999", marginBottom: "4px" }}>ISBN</div>
-                <div style={{ fontSize: "14px", color: "#333" }}>{book.isbn}</div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "#999",
+                    marginBottom: "4px",
+                  }}
+                >
+                  ISBN
+                </div>
+                <div style={{ fontSize: "14px", color: "#333" }}>
+                  {book.isbn}
+                </div>
               </div>
               <div>
-                <div style={{ fontSize: "12px", color: "#999", marginBottom: "4px" }}>分类</div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "#999",
+                    marginBottom: "4px",
+                  }}
+                >
+                  分类
+                </div>
                 <span
                   style={{
                     fontSize: "12px",
@@ -214,21 +227,54 @@ export default function BookDetailPage() {
                 </span>
               </div>
               <div>
-                <div style={{ fontSize: "12px", color: "#999", marginBottom: "4px" }}>页数</div>
-                <div style={{ fontSize: "14px", color: "#333" }}>{book.pages} 页</div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "#999",
+                    marginBottom: "4px",
+                  }}
+                >
+                  页数
+                </div>
+                <div style={{ fontSize: "14px", color: "#333" }}>
+                  {book.pages} 页
+                </div>
               </div>
               <div>
-                <div style={{ fontSize: "12px", color: "#999", marginBottom: "4px" }}>出版年份</div>
-                <div style={{ fontSize: "14px", color: "#333" }}>{book.year}</div>
+                <div
+                  style={{
+                    fontSize: "12px",
+                    color: "#999",
+                    marginBottom: "4px",
+                  }}
+                >
+                  出版年份
+                </div>
+                <div style={{ fontSize: "14px", color: "#333" }}>
+                  {book.published_date}
+                </div>
               </div>
             </div>
 
             {/* 简介 */}
             <div style={{ marginBottom: "28px" }}>
-              <h3 style={{ fontSize: "16px", color: "#1a3a6b", marginBottom: "10px" }}>
+              <h3
+                style={{
+                  fontSize: "16px",
+                  color: "#1a3a6b",
+                  marginBottom: "10px",
+                }}
+              >
                 内容简介
               </h3>
-              <p style={{ fontSize: "14px", color: "#555", lineHeight: 1.8, margin: 0 }}>
+              <p
+                style={{
+                  fontSize: "14px",
+                  color: "#555",
+                  lineHeight: 1.8,
+                  margin: 0,
+                }}
+              >
                 {book.description}
               </p>
             </div>
@@ -237,7 +283,7 @@ export default function BookDetailPage() {
             <div style={{ display: "flex", gap: "12px" }}>
               <button
                 onClick={() => {
-                  if (book.status === "可借") {
+                  if (book.status === "可借阅") {
                     navigate(`/books/${book.id}/borrow`);
                   } else {
                     navigate(`/books/${book.id}/reserve`);
@@ -474,7 +520,9 @@ export default function BookDetailPage() {
             </div>
 
             {/* 图书列表（竖向排列，竖式卡片） */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+            >
               {youMayLike.map((b) => (
                 <Link
                   key={b.id}

@@ -30,6 +30,7 @@ export default function LoginPage() {
         localStorage.setItem("role", res.data.user.role);
         localStorage.setItem("username", username);
         localStorage.setItem("token", res.data.token);
+        localStorage.setItem("reader_id", res.data.user.id.toString());
         navigate("/home");
       } else {
         setToast({ type: "error", message: res.msg || "用户名或密码错误" });

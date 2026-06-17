@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getBookById } from "../../data/books";
+import { getApiBookById } from "../../data/books";
 import coverDefault from "../../img/threeBody.jpg";
+import { borrowBook } from "../../api";
 
 const DURATION_OPTIONS = [
   { label: "1 周", value: 7, desc: "7 天" },
@@ -14,7 +15,7 @@ const todayStr = new Date().toISOString().split("T")[0];
 export default function BorrowPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const book = id ? getBookById(id) : undefined;
+  const book = id ? getApiBookById(id) : undefined;
 
   const [borrowDate, setBorrowDate] = useState(todayStr);
   const [duration, setDuration] = useState<number | null>(null);
@@ -45,9 +46,13 @@ export default function BorrowPage() {
 
   const canSubmit = borrowDate && duration !== null;
 
+  const userid = Number(localStorage.getItem("reader_id"));
   const handleSubmit = () => {
     if (!canSubmit) return;
-    setSubmitted(true);
+    borrowBook({ book_id: book.id, reader_id: userid }).then((res) => {
+      console.log(res);
+      setSubmitted(true);
+    });
   };
 
   if (submitted) {
@@ -57,7 +62,9 @@ export default function BorrowPage() {
     const returnDate = borrowDateObj.toISOString().split("T")[0];
 
     return (
-      <div style={{ maxWidth: "560px", margin: "0 auto", paddingBottom: "48px" }}>
+      <div
+        style={{ maxWidth: "560px", margin: "0 auto", paddingBottom: "48px" }}
+      >
         <div
           style={{
             textAlign: "center",
@@ -92,9 +99,17 @@ export default function BorrowPage() {
               <span style={infoLabelStyle}>借阅时长</span>
               <span style={infoValueStyle}>{selectedDuration?.label}</span>
             </div>
-            <div style={{ ...infoRowStyle, borderBottom: "none", paddingBottom: 0 }}>
+            <div
+              style={{
+                ...infoRowStyle,
+                borderBottom: "none",
+                paddingBottom: 0,
+              }}
+            >
               <span style={infoLabelStyle}>应还日期</span>
-              <span style={{ ...infoValueStyle, color: "#e94560", fontWeight: 600 }}>
+              <span
+                style={{ ...infoValueStyle, color: "#e94560", fontWeight: 600 }}
+              >
                 {returnDate}
               </span>
             </div>
@@ -104,7 +119,9 @@ export default function BorrowPage() {
             ⚠️ 请在两个星期之内来取
           </p>
 
-          <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+          <div
+            style={{ display: "flex", gap: "12px", justifyContent: "center" }}
+          >
             <button
               onClick={() => navigate(`/books/${book.id}`)}
               style={{
@@ -189,11 +206,18 @@ export default function BorrowPage() {
           }}
         />
         <div>
-          <div style={{ fontSize: "16px", fontWeight: 600, color: "#1a3a6b", marginBottom: "4px" }}>
+          <div
+            style={{
+              fontSize: "16px",
+              fontWeight: 600,
+              color: "#1a3a6b",
+              marginBottom: "4px",
+            }}
+          >
             {book.title}
           </div>
           <div style={{ fontSize: "13px", color: "#888" }}>
-            {book.author} · {book.year}
+            {book.author} · {book.published_date}
           </div>
           <div style={{ fontSize: "12px", color: "#999", marginTop: "2px" }}>
             ISBN {book.isbn}
@@ -390,12 +414,10 @@ export default function BorrowPage() {
               transition: "background-color 0.2s",
             }}
             onMouseEnter={(e) => {
-              if (canSubmit)
-                e.currentTarget.style.backgroundColor = "#d63851";
+              if (canSubmit) e.currentTarget.style.backgroundColor = "#d63851";
             }}
             onMouseLeave={(e) => {
-              if (canSubmit)
-                e.currentTarget.style.backgroundColor = "#e94560";
+              if (canSubmit) e.currentTarget.style.backgroundColor = "#e94560";
             }}
           >
             确认借阅

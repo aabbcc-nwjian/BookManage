@@ -1,16 +1,49 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { getAllBooks } from "../../data/books";
-import type { Book } from "../../data/books";
+import { addBook, getBookList, removeBook, updateBook } from "../../api/books";
+import type { AddBookParams, Book, UpdateBookParams } from "../../api/books";
+import useBookStore from "../../store/books";
 
-const books = getAllBooks();
-const allCategories = [...new Set(books.map((b) => b.category))];
+//const books = getAllBooks();
+//const allCategories = [...new Set(books.map((b) => b.category))];
 
 export default function AdminPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("全部");
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const books = useBookStore((state) => state.books);
+  const allCategories = useBookStore((state) => state.allCategories);
+  const setBooks = useBookStore((state) => state.setBooks);
+
+  const refreshBooks = useCallback(() => {
+    getBookList().then((res) => {
+      const nextBooks = res.data.items;
+      setBooks(nextBooks);
+      console.log(res, nextBooks);
+    });
+  }, [setBooks]);
+
+  useEffect(() => {
+    refreshBooks();
+  }, [refreshBooks]);
+
+  const handleDeleteBook = async (book: Book) => {
+    const confirmed = window.confirm(`确定要删除《${book.title}》吗？`);
+    if (!confirmed) return;
+
+    try {
+      const res = await removeBook(book.id);
+      if (res.code === 200) {
+        await refreshBooks();
+        alert("删除成功");
+      } else {
+        alert(res.message || "删除失败");
+      }
+    } catch {
+      alert("删除失败，请稍后重试");
+    }
+  };
 
   const filtered = useMemo(() => {
     return books.filter((book) => {
@@ -22,7 +55,7 @@ export default function AdminPage() {
       const matchCategory = category === "全部" || book.category === category;
       return matchSearch && matchCategory;
     });
-  }, [search, category]);
+  }, [search, category, books]);
 
   return (
     <div style={{ maxWidth: "960px", margin: "0 auto", paddingBottom: "48px" }}>
@@ -73,6 +106,11 @@ export default function AdminPage() {
           book={editingId ? books.find((b) => b.id === editingId) : undefined}
           allCategories={allCategories}
           onClose={() => {
+            setShowAddForm(false);
+            setEditingId(null);
+          }}
+          onSaved={async () => {
+            await refreshBooks();
             setShowAddForm(false);
             setEditingId(null);
           }}
@@ -161,10 +199,7 @@ export default function AdminPage() {
                 setEditingId(editingId === book.id ? null : book.id);
                 setShowAddForm(false);
               }}
-              onDelete={() => {
-                // TODO: 实现删除功能
-                alert(`删除图书: ${book.title}（功能待实现）`);
-              }}
+              onDelete={() => handleDeleteBook(book)}
             />
           ))}
         </div>
@@ -214,7 +249,7 @@ function BookManageRow({
           {book.title}
         </div>
         <div style={{ fontSize: "13px", color: "#888", marginTop: "2px" }}>
-          {book.author} · {book.year} · {book.category} · ISBN{" "}
+          {book.author} · {book.published_date} · {book.category} · ISBN{" "}
           {book.isbn.slice(-7)}
         </div>
       </div>
@@ -224,13 +259,13 @@ function BookManageRow({
         style={{
           fontSize: "13px",
           fontWeight: 600,
-          color: book.remaining > 0 ? "#1a3a6b" : "#e94560",
+          color: book.available_quantity > 0 ? "#1a3a6b" : "#e94560",
           flexShrink: 0,
           minWidth: "60px",
           textAlign: "center",
         }}
       >
-        剩余 {book.remaining}
+        剩余 {book.available_quantity}
       </span>
 
       {/* 状态标签 */}
@@ -268,12 +303,115 @@ function AdminBookForm({
   book,
   allCategories,
   onClose,
+  onSaved,
 }: {
   book?: Book;
   allCategories: string[];
   onClose: () => void;
+  onSaved: () => void | Promise<void>;
 }) {
   const isEdit = !!book;
+  const [title, setTitle] = useState(book?.title || "");
+  const [author, setAuthor] = useState(book?.author || "");
+  const [isbn, setIsbn] = useState(book?.isbn || "");
+  const [publisher, setPublisher] = useState(book?.publisher || "");
+  const [category, setCategory] = useState(book?.category || "");
+  const [publishedDate, setPublishedDate] = useState(
+    book?.published_date || "",
+  );
+  const [pages, setPages] = useState(book?.pages ? String(book.pages) : "");
+  const [quantity, setQuantity] = useState(
+    book ? String(book.total_quantity) : "",
+  );
+  const [shelfLocation, setShelfLocation] = useState(
+    book?.shelf_location || "",
+  );
+  const [description, setDescription] = useState(book?.description || "");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    if (
+      !title.trim() ||
+      !author.trim() ||
+      !publisher.trim() ||
+      !category.trim() ||
+      !publishedDate.trim() ||
+      !quantity.trim() ||
+      !shelfLocation.trim() ||
+      (!isEdit && !isbn.trim())
+    ) {
+      alert("请填写完整的图书信息");
+      return;
+    }
+
+    const numericQuantity = Number(quantity);
+    const numericPages = pages.trim() ? Number(pages) : undefined;
+
+    if (!Number.isFinite(numericQuantity) || numericQuantity < 0) {
+      alert("库存数量必须是大于等于 0 的数字");
+      return;
+    }
+
+    if (
+      numericPages !== undefined &&
+      (!Number.isFinite(numericPages) || numericPages < 0)
+    ) {
+      alert("页数必须是大于等于 0 的数字");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (isEdit) {
+        const data: UpdateBookParams = {
+          title: title.trim(),
+          author: author.trim(),
+          publisher: publisher.trim(),
+          category: category.trim(),
+          published_date: publishedDate.trim(),
+          total_quantity: numericQuantity,
+          shelf_location: shelfLocation.trim(),
+          description: description.trim(),
+        };
+
+        if (numericPages !== undefined) {
+          data.pages = numericPages;
+        }
+
+        const res = await updateBook(book.id, data);
+        if (res.code !== 200) {
+          alert(res.message || "修改失败");
+          return;
+        }
+      } else {
+        const data: AddBookParams = {
+          isbn: isbn.trim(),
+          title: title.trim(),
+          author: author.trim(),
+          publisher: publisher.trim(),
+          category: category.trim(),
+          published_date: publishedDate.trim(),
+          quantity: numericQuantity,
+          shelf_location: shelfLocation.trim(),
+          description: description.trim(),
+          pages: numericPages,
+        };
+
+        const res = await addBook(data);
+        if (res.code !== 201 && res.code !== 200) {
+          alert(res.message || "添加失败");
+          return;
+        }
+      }
+
+      await onSaved();
+      alert(isEdit ? "修改成功" : "添加成功");
+    } catch {
+      alert(isEdit ? "修改失败，请稍后重试" : "添加失败，请稍后重试");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div
@@ -297,12 +435,38 @@ function AdminBookForm({
           marginBottom: "20px",
         }}
       >
-        <FormField label="书名" placeholder="请输入书名" />
-        <FormField label="作者" placeholder="请输入作者" />
-        <FormField label="ISBN" placeholder="请输入 ISBN" />
+        <FormField
+          label="书名"
+          placeholder="请输入书名"
+          value={title}
+          onChange={setTitle}
+        />
+        <FormField
+          label="作者"
+          placeholder="请输入作者"
+          value={author}
+          onChange={setAuthor}
+        />
+        <FormField
+          label="ISBN"
+          placeholder="请输入 ISBN"
+          value={isbn}
+          onChange={setIsbn}
+          disabled={isEdit}
+        />
+        <FormField
+          label="出版社"
+          placeholder="请输入出版社"
+          value={publisher}
+          onChange={setPublisher}
+        />
         <div>
           <label style={labelStyle}>分类</label>
-          <select style={{ ...inputStyle, cursor: "pointer" }}>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            style={{ ...inputStyle, cursor: "pointer" }}
+          >
             <option value="">请选择分类</option>
             {allCategories.map((c) => (
               <option key={c} value={c}>
@@ -311,14 +475,40 @@ function AdminBookForm({
             ))}
           </select>
         </div>
-        <FormField label="出版年份" placeholder="请输入出版年份" />
-        <FormField label="页数" placeholder="请输入页数" />
+        <FormField
+          label="出版日期"
+          placeholder="例如：2024-01-01"
+          value={publishedDate}
+          onChange={setPublishedDate}
+        />
+        <FormField
+          label={isEdit ? "总库存" : "新增数量"}
+          placeholder="请输入库存数量"
+          value={quantity}
+          onChange={setQuantity}
+          type="number"
+        />
+        <FormField
+          label="书架位置"
+          placeholder="例如：A3-12"
+          value={shelfLocation}
+          onChange={setShelfLocation}
+        />
+        <FormField
+          label="页数"
+          placeholder="请输入页数"
+          value={pages}
+          onChange={setPages}
+          type="number"
+        />
       </div>
 
       <div style={{ marginBottom: "20px" }}>
         <label style={labelStyle}>内容简介</label>
         <textarea
           placeholder="请输入内容简介"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           rows={3}
           style={{ ...inputStyle, resize: "vertical" }}
         />
@@ -326,18 +516,20 @@ function AdminBookForm({
 
       <div style={{ display: "flex", gap: "12px" }}>
         <button
+          onClick={handleSubmit}
+          disabled={submitting}
           style={{
             padding: "10px 28px",
             fontSize: "14px",
             fontWeight: 600,
             color: "#fff",
-            backgroundColor: "#3498db",
+            backgroundColor: submitting ? "#8bbfe3" : "#3498db",
             border: "none",
             borderRadius: "6px",
-            cursor: "pointer",
+            cursor: submitting ? "not-allowed" : "pointer",
           }}
         >
-          {isEdit ? "保存修改" : "确认添加"}
+          {submitting ? "提交中..." : isEdit ? "保存修改" : "确认添加"}
         </button>
         <button onClick={onClose} style={cancelBtnStyle}>
           取消
@@ -351,14 +543,33 @@ function AdminBookForm({
 function FormField({
   label,
   placeholder,
+  value,
+  onChange,
+  type = "text",
+  disabled = false,
 }: {
   label: string;
   placeholder: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: string;
+  disabled?: boolean;
 }) {
   return (
     <div>
       <label style={labelStyle}>{label}</label>
-      <input type="text" placeholder={placeholder} style={inputStyle} />
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value)}
+        style={{
+          ...inputStyle,
+          cursor: disabled ? "not-allowed" : "text",
+          opacity: disabled ? 0.65 : 1,
+        }}
+      />
     </div>
   );
 }

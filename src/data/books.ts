@@ -1,3 +1,6 @@
+import useBookStore from "../store/books";
+import type { Book as ApiBook } from "../api";
+
 export interface Book {
   id: string;
   title: string;
@@ -191,6 +194,11 @@ export function getAllBooks(): Book[] {
 /** 根据 ID 获取图书 */
 export function getBookById(id: string): Book | undefined {
   return BOOKS_DB[id];
+}
+
+/** 根据 ID 从接口图书缓存中查找图书 */
+export function getApiBookById(id: string | number): ApiBook | undefined {
+  return useBookStore.getState().getBookById(id);
 }
 
 /** 图书借阅状态 → 颜色映射 */

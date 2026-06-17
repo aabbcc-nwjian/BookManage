@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getBookById } from "../../data/books";
+import { getApiBookById } from "../../data/books";
 import coverDefault from "../../img/threeBody.jpg";
+import { reserveBook } from "../../api/books";
 
 export default function ReservePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const book = id ? getBookById(id) : undefined;
+  const book = id ? getApiBookById(id) : undefined;
 
   const [submitted, setSubmitted] = useState(false);
 
@@ -32,10 +33,19 @@ export default function ReservePage() {
       </div>
     );
   }
+  const userid = Number(localStorage.getItem("reader_id"));
+  const handleSubmit = () => {
+    reserveBook({ book_id: book.id, reader_id: userid }).then((res) => {
+      console.log(res);
+      setSubmitted(true);
+    });
+  };
 
   if (submitted) {
     return (
-      <div style={{ maxWidth: "560px", margin: "0 auto", paddingBottom: "48px" }}>
+      <div
+        style={{ maxWidth: "560px", margin: "0 auto", paddingBottom: "48px" }}
+      >
         <div
           style={{
             textAlign: "center",
@@ -70,7 +80,13 @@ export default function ReservePage() {
               <span style={infoLabelStyle}>ISBN</span>
               <span style={infoValueStyle}>{book.isbn}</span>
             </div>
-            <div style={{ ...infoRowStyle, borderBottom: "none", paddingBottom: 0 }}>
+            <div
+              style={{
+                ...infoRowStyle,
+                borderBottom: "none",
+                paddingBottom: 0,
+              }}
+            >
               <span style={infoLabelStyle}>预约日期</span>
               <span style={infoValueStyle}>
                 {new Date().toISOString().split("T")[0]}
@@ -82,7 +98,9 @@ export default function ReservePage() {
             ⚠️ 书到后会通知您，请在通知后两个星期之内来取
           </p>
 
-          <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+          <div
+            style={{ display: "flex", gap: "12px", justifyContent: "center" }}
+          >
             <button
               onClick={() => navigate(`/books/${book.id}`)}
               style={{
@@ -178,7 +196,7 @@ export default function ReservePage() {
             {book.title}
           </div>
           <div style={{ fontSize: "13px", color: "#888" }}>
-            {book.author} · {book.year}
+            {book.author} · {book.published_date}
           </div>
           <div style={{ fontSize: "12px", color: "#999", marginTop: "2px" }}>
             ISBN {book.isbn}
@@ -255,7 +273,7 @@ export default function ReservePage() {
             ← 返回详情
           </button>
           <button
-            onClick={() => setSubmitted(true)}
+            onClick={handleSubmit}
             style={{
               flex: 1,
               padding: "12px 24px",

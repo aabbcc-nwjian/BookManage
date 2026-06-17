@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import bgImage from "../../img/library3.png";
-import { getReservationList, getBorrowList } from "../../api/record";
-import { getBookList } from "../../api/books";
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -16,18 +14,6 @@ export default function HomePage() {
   const borrowCardRef = useRef<HTMLAnchorElement>(null);
   const reserveCardRef = useRef<HTMLAnchorElement>(null);
   const fineCardRef = useRef<HTMLAnchorElement>(null);
-
-  useEffect(() => {
-    getBookList().then((res) => {
-      console.log("图书列表:", res);
-    });
-    getReservationList().then((res) => {
-      console.log("预约记录:", res);
-    });
-    getBorrowList().then((res) => {
-      console.log("借阅记录:", res);
-    });
-  }, []);
 
   // 页面入场动画
   useEffect(() => {

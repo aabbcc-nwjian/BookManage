@@ -1,5 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getFineList, getBookList } from "../../api";
+import type { FineRecord } from "../../api";
+import { getApiBookById } from "../../data/books";
+import useBookStore from "../../store/books";
 
 // 模拟罚款数据
 const MOCK_FINES = [
@@ -41,23 +45,33 @@ const MOCK_FINES = [
   },
 ];
 
-const STATUS_MAP: Record<string, { color: string; bg: string }> = {
-  未缴纳: { color: "#ff4d4f", bg: "#fff2f0" },
-  已缴纳: { color: "#52c41a", bg: "#f6ffed" },
-};
+const STATUS_MAP: Record<string, { color: string; bg: string; text: string }> =
+  {
+    unpaid: { color: "#ff4d4f", bg: "#fff2f0", text: "未缴纳" },
+    paid: { color: "#52c41a", bg: "#f6ffed", text: "已缴纳" },
+  };
 
 export default function FineRecordsPage() {
   const [filter, setFilter] = useState("全部");
+  useEffect(() => {
+    getFineList().then((res) => {
+      console.log("罚款记录:", res.data.items);
+      setRecords(res.data.items);
+    });
+    getBookList().then((res) => {
+      useBookStore.setState({ books: res.data.items });
+      console.log("图书列表:", res.data.items);
+    });
+  }, []);
+
+  const [records, setRecords] = useState<FineRecord[]>([]);
 
   const filtered =
-    filter === "全部"
-      ? MOCK_FINES
-      : MOCK_FINES.filter((r) => r.status === filter);
+    filter === "全部" ? records : records.filter((r) => r.status === filter);
 
-  const totalUnpaid = MOCK_FINES.filter((f) => f.status === "未缴纳").reduce(
-    (sum, f) => sum + f.amount,
-    0
-  );
+  const totalUnpaid = records
+    .filter((f) => f.status === "unpaid")
+    .reduce((sum, f) => sum + f.amount, 0);
 
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto" }}>
@@ -108,8 +122,7 @@ export default function FineRecordsPage() {
               padding: "6px 18px",
               fontSize: "13px",
               borderRadius: "16px",
-              border:
-                filter === s ? "1px solid #e94560" : "1px solid #e0e0e0",
+              border: filter === s ? "1px solid #e94560" : "1px solid #e0e0e0",
               color: filter === s ? "#e94560" : "#666",
               backgroundColor: filter === s ? "#fff0f3" : "#fff",
               cursor: "pointer",
@@ -138,20 +151,22 @@ export default function FineRecordsPage() {
                 borderBottom: "1px solid #e8e8e8",
               }}
             >
-              {["罚款编号", "图书名称", "金额", "原因", "日期", "状态"].map((h) => (
-                <th
-                  key={h}
-                  style={{
-                    padding: "13px 16px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    color: "#555",
-                    textAlign: "left",
-                  }}
-                >
-                  {h}
-                </th>
-              ))}
+              {["罚款编号", "图书名称", "金额", "原因", "日期", "状态"].map(
+                (h) => (
+                  <th
+                    key={h}
+                    style={{
+                      padding: "13px 16px",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      color: "#555",
+                      textAlign: "left",
+                    }}
+                  >
+                    {h}
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
           <tbody>
@@ -162,25 +177,50 @@ export default function FineRecordsPage() {
                   key={record.id}
                   style={{ borderBottom: "1px solid #f0f0f0" }}
                 >
-                  <td style={{ padding: "13px 16px", fontSize: "14px", color: "#888" }}>
-                    {record.id}
+                  <td
+                    style={{
+                      padding: "13px 16px",
+                      fontSize: "14px",
+                      color: "#888",
+                    }}
+                  >
+                    FN{record.id}
                   </td>
                   <td style={{ padding: "13px 16px", fontSize: "14px" }}>
                     <Link
-                      to={`/books/${record.bookId}`}
+                      to={`/books/${record.borrow_id}`}
                       style={{ color: "#1a3a6b", textDecoration: "none" }}
                     >
-                      {record.bookTitle}
+                      {getApiBookById(record.borrow_id)?.title ?? "-"}
                     </Link>
                   </td>
-                  <td style={{ padding: "13px 16px", fontSize: "14px", color: "#ff4d4f", fontWeight: 600 }}>
+                  <td
+                    style={{
+                      padding: "13px 16px",
+                      fontSize: "14px",
+                      color: "#ff4d4f",
+                      fontWeight: 600,
+                    }}
+                  >
                     ¥{record.amount.toFixed(2)}
                   </td>
-                  <td style={{ padding: "13px 16px", fontSize: "14px", color: "#555" }}>
+                  <td
+                    style={{
+                      padding: "13px 16px",
+                      fontSize: "14px",
+                      color: "#555",
+                    }}
+                  >
                     {record.reason}
                   </td>
-                  <td style={{ padding: "13px 16px", fontSize: "14px", color: "#555" }}>
-                    {record.date}
+                  <td
+                    style={{
+                      padding: "13px 16px",
+                      fontSize: "14px",
+                      color: "#555",
+                    }}
+                  >
+                    {record.created_date}
                   </td>
                   <td style={{ padding: "13px 16px" }}>
                     <span
@@ -194,7 +234,7 @@ export default function FineRecordsPage() {
                         backgroundColor: s.bg,
                       }}
                     >
-                      {record.status}
+                      {s.text}
                     </span>
                   </td>
                 </tr>

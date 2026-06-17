@@ -58,6 +58,7 @@ export interface AddBookParams {
   quantity: number;
   shelf_location: string;
   description?: string;
+  pages?: number;
 }
 
 export interface UpdateBookParams {
