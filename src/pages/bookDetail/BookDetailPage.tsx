@@ -1,13 +1,8 @@
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { getApiBookById } from "../../data/books";
+import useBookStore from "../../store/books";
 import { getBookCoverUrl } from "../../api";
 import coverDefault from "../../img/threeBody.jpg";
-import {
-  getRecommendationsByCategory,
-  getRecommendationsForReader,
-} from "../../api";
-import type { Book } from "../../api";
 
 const CATEGORY_COLOR: Record<string, string> = {
   科幻: "#3498db",
@@ -20,29 +15,27 @@ const CATEGORY_COLOR: Record<string, string> = {
 export default function BookDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [liked, setLiked] = useState(false);
-  const [categoryBooks, setCategoryBooks] = useState<Book[]>([]);
-  const [readerBooks, setReaderBooks] = useState<Book[]>([]);
 
-  const book = id ? getApiBookById(id) : undefined;
-  useEffect(() => {
-    getRecommendationsByCategory({
-      category: book?.category || "",
-    }).then((res) => {
-      console.log("分类推荐:", res.data.items);
-      setCategoryBooks(res.data.items);
-    });
-    getRecommendationsForReader(1).then((res) => {
-      console.log("读者推荐:", res.data.items);
-      setReaderBooks(res.data.items);
-    });
-  }, [book?.category]);
+  // 从 Zustand store 获取所有图书
+  const books = useBookStore((state) => state.books);
+  const book = id ? books.find((b) => b.id === Number(id)) : undefined;
 
-  // "大家都在看"：排除当前图书，取推荐指数最高的 3 本
-  const topRated = categoryBooks.filter((b) => b.id !== Number(id)).slice(0, 3);
+  // "大家都在看"：从 store 中按 borrow_count 降序排列，排除当前图书，取前 3 本
+  const topRated = useMemo(() => {
+    if (!book || books.length === 0) return [];
+    return [...books]
+      .filter((b) => b.id !== book.id)
+      .sort((a, b) => (b.borrow_count ?? 0) - (a.borrow_count ?? 0))
+      .slice(0, 3);
+  }, [books, book]);
 
-  // "猜你喜欢"：基于当前图书 ID 的伪随机推荐（TODO: 后续接入真实推荐算法）
-  const youMayLike = readerBooks.filter((b) => b.id !== Number(id)).slice(0, 3);
+  // "猜你喜欢"：从 store 中筛选同分类图书，排除当前图书，取前 3 本
+  const youMayLike = useMemo(() => {
+    if (!book || books.length === 0) return [];
+    return books
+      .filter((b) => b.id !== book.id && b.category === book.category)
+      .slice(0, 3);
+  }, [books, book]);
 
   if (!book) {
     return (
@@ -70,7 +63,7 @@ export default function BookDetailPage() {
     );
   }
 
-  const displayRating = book.borrow_count || 0 + (liked ? 1 : 0);
+  const displayRating = book.borrow_count ?? 0;
 
   return (
     <div
@@ -122,7 +115,7 @@ export default function BookDetailPage() {
           />
 
           <div style={{ flex: 1, padding: "28px 32px", minWidth: 0 }}>
-            {/* 标题行 + 推荐指数 */}
+            {/* 标题行 + 热度 */}
             <div
               style={{
                 display: "flex",
@@ -142,9 +135,8 @@ export default function BookDetailPage() {
                 {book.title}
               </h1>
 
-              {/* 可点击的推荐指数 */}
-              <button
-                onClick={() => setLiked((v) => !v)}
+              {/* 热度展示 */}
+              <div
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -152,12 +144,10 @@ export default function BookDetailPage() {
                   padding: "6px 14px",
                   fontSize: "14px",
                   fontWeight: 600,
-                  color: liked ? "#fff" : "#e74c3c",
-                  backgroundColor: liked ? "#e74c3c" : "#fff",
-                  border: liked ? "none" : "2px solid #e74c3c",
+                  color: "#e74c3c",
+                  backgroundColor: "#fff",
+                  border: "2px solid #e74c3c",
                   borderRadius: "20px",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
                   flexShrink: 0,
                 }}
               >
@@ -165,17 +155,16 @@ export default function BookDetailPage() {
                   width="16"
                   height="16"
                   viewBox="0 0 24 24"
-                  fill={liked ? "currentColor" : "none"}
+                  fill="currentColor"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="1"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
-                  <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
                 </svg>
                 {displayRating}
-              </button>
+              </div>
             </div>
 
             <p style={{ color: "#888", fontSize: "15px", margin: "0 0 20px" }}>
@@ -426,7 +415,7 @@ export default function BookDetailPage() {
                     style={{
                       width: "100%",
                       height: "200px",
-                      background: `url(${coverDefault}) center / cover no-repeat`,
+                      background: `url(${b.has_cover ? getBookCoverUrl(b.id) : coverDefault}) center / cover no-repeat`,
                       backgroundColor: "#d0dce8",
                     }}
                   />
@@ -467,14 +456,13 @@ export default function BookDetailPage() {
                           width="12"
                           height="12"
                           viewBox="0 0 24 24"
-                          fill="none"
+                          fill="currentColor"
                           stroke="currentColor"
-                          strokeWidth="2"
+                          strokeWidth="1"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         >
-                          <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-                          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+                          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
                         </svg>
                         {b.borrow_count}
                       </span>
@@ -555,7 +543,7 @@ export default function BookDetailPage() {
                     style={{
                       width: "100%",
                       height: "200px",
-                      background: `url(${coverDefault}) center / cover no-repeat`,
+                      background: `url(${b.has_cover ? getBookCoverUrl(b.id) : coverDefault}) center / cover no-repeat`,
                       backgroundColor: "#d0dce8",
                     }}
                   />
@@ -598,14 +586,13 @@ export default function BookDetailPage() {
                           width="14"
                           height="14"
                           viewBox="0 0 24 24"
-                          fill="none"
+                          fill="currentColor"
                           stroke="currentColor"
-                          strokeWidth="2"
+                          strokeWidth="1"
                           strokeLinecap="round"
                           strokeLinejoin="round"
                         >
-                          <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
-                          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
+                          <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
                         </svg>
                         {b.borrow_count}
                       </span>

@@ -30,16 +30,10 @@ export default function AdminPage() {
   }, [refreshBooks]);
 
   const handleDeleteBook = async (book: Book) => {
-    const confirmed = window.confirm(`确定要删除《${book.title}》吗？`);
-    if (!confirmed) return;
-
     try {
       const res = await removeBook(book.id);
       if (res.code === 200) {
         await refreshBooks();
-        alert("删除成功");
-      } else {
-        alert(res.message || "删除失败");
       }
     } catch {
       alert("删除失败，请稍后重试");
@@ -451,9 +445,7 @@ function AdminBookForm({
       }
 
       await onSaved();
-      alert(isEdit ? "修改成功" : "添加成功");
     } catch {
-      alert(isEdit ? "修改失败，请稍后重试" : "添加失败，请稍后重试");
     } finally {
       setSubmitting(false);
     }
