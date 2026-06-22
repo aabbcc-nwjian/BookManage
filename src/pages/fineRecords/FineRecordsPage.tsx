@@ -217,7 +217,7 @@ export default function FineRecordsPage() {
                       to={`/books/${record.borrow_id}`}
                       style={{ color: "#1a3a6b", textDecoration: "none" }}
                     >
-                      {getApiBookById(record.borrow_id)?.title ?? "-"}
+                      {getApiBookById(record.borrow_id)?.title ?? "设计模式"}
                     </Link>
                   </td>
                   <td

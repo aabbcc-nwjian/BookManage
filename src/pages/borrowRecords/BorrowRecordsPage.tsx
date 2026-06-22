@@ -15,13 +15,14 @@ const STATUS_MAP: Record<string, { color: string; bg: string; text: string }> =
 export default function BorrowRecordsPage() {
   const [filter, setFilter] = useState("全部");
   const [records, setRecords] = useState<BorrowRecord[]>([]);
+  const readername = localStorage.getItem("username");
   useEffect(() => {
     getBookList().then((res) => {
       useBookStore.setState({ books: res.data.items });
     });
     getBorrowList().then((res) => {
       console.log("借阅记录:", res.data.items);
-      setRecords(res.data.items);
+      setRecords(res.data.items.filter((r) => r.reader_name === readername));
     });
   }, []);
 
@@ -49,22 +50,28 @@ export default function BorrowRecordsPage() {
 
       {/* 筛选标签 */}
       <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
-        {["全部", "借阅中", "已归还", "逾期"].map((s) => (
+        {[
+          ["全部", "全部"],
+          ["借阅中", "borrowed"],
+          ["已归还", "returned"],
+          ["逾期", "overdue"],
+        ].map((s) => (
           <button
-            key={s}
-            onClick={() => setFilter(s)}
+            key={s[1]}
+            onClick={() => setFilter(s[1])}
             style={{
               padding: "6px 18px",
               fontSize: "13px",
               borderRadius: "16px",
-              border: filter === s ? "1px solid #e94560" : "1px solid #e0e0e0",
-              color: filter === s ? "#e94560" : "#666",
-              backgroundColor: filter === s ? "#fff0f3" : "#fff",
+              border:
+                filter === s[1] ? "1px solid #e94560" : "1px solid #e0e0e0",
+              color: filter === s[1] ? "#e94560" : "#666",
+              backgroundColor: filter === s[1] ? "#fff0f3" : "#fff",
               cursor: "pointer",
               transition: "all 0.2s",
             }}
           >
-            {s}
+            {s[0]}
           </button>
         ))}
       </div>
